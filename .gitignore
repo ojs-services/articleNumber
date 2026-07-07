@@ -1,0 +1,18 @@
+# Internal working notes — not part of the public release
+docs/backlog-1.7.md
+docs/notes-ris-c7.md
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+Desktop.ini
+*~
+*.bak
+*.orig
+*.swp
+.idea/
+.vscode/
+
+# Build / packaging artifacts (releases are attached to GitHub Releases, not committed)
+*.tar.gz
+*.zip

@@ -1,0 +1,170 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Article Number Plugin 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-26T00:00:00+00:00\n"
+"PO-Revision-Date: 2026-06-26T00:00:00+00:00\n"
+"Language-Team: en_US\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Plugin metadata --------------------------------------------------------
+
+msgid "plugins.generic.articleNumber.name"
+msgstr "Article Number Plugin"
+
+msgid "plugins.generic.articleNumber.description"
+msgstr "Manages a digital-first \"Article Number\" (elocation-id) as metadata separate from the page-range field — standards-compliant for Crossref, JATS/PMC and Google Scholar, and aligned with PKP's core property name for a future zero-migration hand-off."
+
+# Settings ---------------------------------------------------------------
+
+msgid "plugins.generic.articleNumber.settings.title"
+msgstr "Article Number Settings"
+
+msgid "plugins.generic.articleNumber.settings.enableWorkNumber"
+msgstr "Enable the Article Number field for this journal"
+
+msgid "plugins.generic.articleNumber.settings.enableWorkNumber.description"
+msgstr "When enabled, editors can record an Article Number (elocation-id) on each article, stored separately from the page range. Leave disabled if this journal uses traditional page numbers. Turning this off does not change any existing OJS behaviour."
+
+msgid "plugins.generic.articleNumber.settings.showInDetails"
+msgstr "Show the Article Number in the article details block"
+
+msgid "plugins.generic.articleNumber.settings.showInDetails.description"
+msgstr "If your theme already displays the Article Number itself (e.g. Nivo, Atlas, Axis), turn this off so it is not shown twice. This only affects the plugin's own item on the article page — it never changes export, citation or the Google Scholar fix."
+
+# Editor metadata field --------------------------------------------------
+
+msgid "plugins.generic.articleNumber.field.label"
+msgstr "Article Number"
+
+msgid "plugins.generic.articleNumber.field.description"
+msgstr "The digital-first locator for this article (elocation-id), e.g. e0231470 or P2.16. Use this <strong>instead of</strong> a page range — when an Article Number is set it becomes the authoritative coordinate, and you should leave the Pages field empty. Only use Pages for articles that have a genuine printed page range. Never fill both: doing so produces broken metadata in Crossref, JATS/PMC and Google Scholar."
+
+msgid "plugins.generic.articleNumber.citation.articleLabel"
+msgstr "Article"
+
+# Generator (Phase 6.5) --------------------------------------------------
+
+msgid "plugins.generic.articleNumber.settings.generator.title"
+msgstr "Article Number Generator (optional)"
+
+msgid "plugins.generic.articleNumber.settings.generator.enabled"
+msgstr "Suggest a sequential Article Number for new, unpublished articles"
+
+msgid "plugins.generic.articleNumber.settings.generator.template"
+msgstr "Template"
+
+msgid "plugins.generic.articleNumber.settings.generator.template.description"
+msgstr "Pattern for the suggested number. Use {:04d} for a zero-padded counter (e.g. e{:04d} → e0001) or {n} for a plain counter. The suggestion is editable — it never constrains the field, and the counter runs per journal+issue. Default: e{:04d}."
+
+msgid "plugins.generic.articleNumber.generator.suggested"
+msgstr "Suggested next Article Number: <strong>{$number}</strong> — type it into the field above to use it."
+
+msgid "plugins.generic.articleNumber.generator.collision"
+msgstr "Warning: this Article Number is already used by another article in this issue."
+
+# Uniqueness (Phase 1.4.0) -----------------------------------------------
+
+msgid "plugins.generic.articleNumber.settings.uniqueness"
+msgstr "Article Number uniqueness"
+
+msgid "plugins.generic.articleNumber.settings.uniqueness.journal"
+msgstr "Unique across the whole journal (recommended)"
+
+msgid "plugins.generic.articleNumber.settings.uniqueness.issue"
+msgstr "Unique within each issue only"
+
+msgid "plugins.generic.articleNumber.settings.uniqueness.description"
+msgstr "Choose whether an Article Number must be unique across the entire journal (the continuous-publishing model used by PLoS and similar journals — recommended) or only within each issue (for journals that restart numbering each issue). Saving a duplicate on an unpublished article is blocked; already-published articles are never affected."
+
+msgid "plugins.generic.articleNumber.uniqueness.error"
+msgstr "This Article Number is already used by another article in this journal. Each article must have a unique Article Number."
+
+# In-panel migration (Phase 1.6.0) --------------------------------------
+
+msgid "plugins.generic.articleNumber.migrate.title"
+msgstr "Convert legacy page numbers into Article Numbers (this journal only)"
+
+msgid "plugins.generic.articleNumber.migrate.intro"
+msgstr "Some journals had to type article numbers (e.g. e0231470) into the \"Pages\" box because there used to be no separate field. This tool finds them and copies them to the right place — the Article Number field. It NEVER touches your \"Pages\" field (the value stays exactly as it is), it does not change the value (it copies the number as found), it affects only this journal, and you can undo it at any time. How it works: 1. \"Scan\" shows what would be converted, changing nothing. 2. Review the list. 3. \"Apply\" copies only the numbers you saw in the scan into the Article Number field. 4. \"Undo\" removes the numbers this tool copied (anything you entered by hand is kept)."
+
+msgid "plugins.generic.articleNumber.migrate.enableFirst"
+msgstr "Have you previously stored article numbers in the Pages field? Enable the Article Number field for this journal above, click Save, then reopen this window — a section for converting those legacy page numbers into Article Numbers will appear here."
+
+msgid "plugins.generic.articleNumber.migrate.threshold.label"
+msgstr "Conversion limit for this screen (number of articles)"
+
+msgid "plugins.generic.articleNumber.migrate.threshold.description"
+msgstr "If this journal has many articles to convert (default: more than 2000), \"Apply\" is locked on this screen. Processing a large number of articles through the web browser can be interrupted partway; instead, you are shown a safe command to run on the server. \"Scan\" and \"Undo\" always work and are never locked."
+
+msgid "plugins.generic.articleNumber.migrate.scan"
+msgstr "Scan"
+
+msgid "plugins.generic.articleNumber.migrate.apply"
+msgstr "Apply"
+
+msgid "plugins.generic.articleNumber.migrate.rollback"
+msgstr "Undo"
+
+msgid "plugins.generic.articleNumber.migrate.scanning"
+msgstr "Scanning…"
+
+msgid "plugins.generic.articleNumber.migrate.applying"
+msgstr "Converting…"
+
+msgid "plugins.generic.articleNumber.migrate.rolling"
+msgstr "Undoing…"
+
+msgid "plugins.generic.articleNumber.migrate.scan.summary"
+msgstr "%d% article(s) to convert · %m% need a manual check · %r% real page range(s) skipped · %h% already have a number."
+
+msgid "plugins.generic.articleNumber.migrate.scan.none"
+msgstr "No legacy article numbers to convert were found in this journal."
+
+msgid "plugins.generic.articleNumber.migrate.scan.ready"
+msgstr "Reviewed the list above? Click Apply to copy these numbers into the Article Number field."
+
+msgid "plugins.generic.articleNumber.migrate.scan.locked"
+msgstr "%n% articles exceed this screen's limit (%t%). Run this command on the server instead:"
+
+msgid "plugins.generic.articleNumber.migrate.apply.confirm"
+msgstr "This will copy the number of %n% article(s) in this journal into the Article Number field. Your page numbers will NOT change, and this can be undone. Continue?"
+
+msgid "plugins.generic.articleNumber.migrate.apply.done"
+msgstr "Done — copied the number for %n% article(s). The Pages field was not changed."
+
+msgid "plugins.generic.articleNumber.migrate.apply.stale"
+msgstr "The data changed since your last scan, so nothing was copied. Please Scan again, review the list, then Apply."
+
+msgid "plugins.generic.articleNumber.migrate.apply.nothing"
+msgstr "Nothing to copy — no articles left to convert."
+
+msgid "plugins.generic.articleNumber.migrate.apply.aborted"
+msgstr "Stopped: a page value changed unexpectedly during copying (#%id%). Nothing further was written — please review."
+
+msgid "plugins.generic.articleNumber.migrate.rollback.confirm"
+msgstr "This removes ONLY the Article Numbers this tool copied. Article Numbers you entered by hand are kept. Continue?"
+
+msgid "plugins.generic.articleNumber.migrate.rollback.done"
+msgstr "Undone — removed the copied number from %n% article(s)."
+
+msgid "plugins.generic.articleNumber.migrate.examples"
+msgstr "Examples:"
+
+msgid "plugins.generic.articleNumber.migrate.error"
+msgstr "Something went wrong. Please reload the settings and try again."
+
+msgid "plugins.generic.articleNumber.migrate.error.noContext"
+msgstr "Migration must be run from within a journal."
+
+msgid "plugins.generic.articleNumber.migrate.error.unauthorized"
+msgstr "You must be a journal manager to run the migration."
+
+msgid "plugins.generic.articleNumber.migrate.error.disabled"
+msgstr "Enable the Article Number feature for this journal first."
+
+msgid "plugins.generic.articleNumber.field.error.published"
+msgstr "This article is already published, so its Article Number cannot be changed — the published coordinate is permanent and changing it would break citation and indexing matches. To back-fill an Article Number on already-published articles, use the plugin's migration tool instead."

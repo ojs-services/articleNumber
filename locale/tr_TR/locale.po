@@ -1,0 +1,170 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Article Number Plugin 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-26T00:00:00+00:00\n"
+"PO-Revision-Date: 2026-06-26T00:00:00+00:00\n"
+"Language-Team: tr_TR\n"
+"Language: tr_TR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Plugin metadata --------------------------------------------------------
+
+msgid "plugins.generic.articleNumber.name"
+msgstr "Makale Numarası Eklentisi"
+
+msgid "plugins.generic.articleNumber.description"
+msgstr "Dijital-öncelikli dergiler için \"Makale Numarası\"nı (elocation-id), sayfa aralığı alanından ayrı bir metadata olarak yönetir — Crossref, JATS/PMC ve Google Scholar ile uyumlu ve gelecekte OJS çekirdeğine sıfır-taşımayla devredilebilecek şekilde PKP'nin çekirdek alan adıyla hizalıdır."
+
+# Settings ---------------------------------------------------------------
+
+msgid "plugins.generic.articleNumber.settings.title"
+msgstr "Makale Numarası Ayarları"
+
+msgid "plugins.generic.articleNumber.settings.enableWorkNumber"
+msgstr "Bu dergi için Makale Numarası alanını etkinleştir"
+
+msgid "plugins.generic.articleNumber.settings.enableWorkNumber.description"
+msgstr "Etkinleştirildiğinde editörler her makaleye, sayfa aralığından ayrı saklanan bir Makale Numarası (elocation-id) girebilir. Bu dergi geleneksel sayfa numaraları kullanıyorsa devre dışı bırakın. Bu seçeneğin kapalı olması mevcut hiçbir OJS davranışını değiştirmez."
+
+msgid "plugins.generic.articleNumber.settings.showInDetails"
+msgstr "Makale detayında makale bilgisi bloğunda makale numarasını göster"
+
+msgid "plugins.generic.articleNumber.settings.showInDetails.description"
+msgstr "Temanız makale numarası eklentisini doğrudan destekliyorsa (Nivo, Atlas, Axis gibi) bu özelliği pasif yapabilirsiniz; böylece numara iki kez gösterilmez. Bu yalnızca eklentinin makale sayfasındaki kendi gösterimini etkiler — export, atıf ve Google Scholar düzeltmesini değiştirmez."
+
+# Editor metadata field --------------------------------------------------
+
+msgid "plugins.generic.articleNumber.field.label"
+msgstr "Makale Numarası"
+
+msgid "plugins.generic.articleNumber.field.description"
+msgstr "Bu makalenin dijital-öncelikli konum tanımlayıcısı (elocation-id) — ör. e0231470 veya P2.16. Bunu sayfa aralığı <strong>yerine</strong> kullanın: bir Makale Numarası girildiğinde yetkili koordinat o olur ve Sayfalar alanını boş bırakmalısınız. Sayfalar alanını yalnızca gerçek bir basılı sayfa aralığı olan makaleler için kullanın. İkisini birden asla doldurmayın: aksi hâlde Crossref, JATS/PMC ve Google Scholar'da bozuk metadata oluşur."
+
+msgid "plugins.generic.articleNumber.citation.articleLabel"
+msgstr "Makale"
+
+# Generator (Phase 6.5) --------------------------------------------------
+
+msgid "plugins.generic.articleNumber.settings.generator.title"
+msgstr "Makale Numarası Üreteci (opsiyonel)"
+
+msgid "plugins.generic.articleNumber.settings.generator.enabled"
+msgstr "Yeni, yayımlanmamış makaleler için sıralı bir Makale Numarası öner"
+
+msgid "plugins.generic.articleNumber.settings.generator.template"
+msgstr "Şablon"
+
+msgid "plugins.generic.articleNumber.settings.generator.template.description"
+msgstr "Önerilen numara için desen. Sıfır-dolgulu sayaç için {:04d} kullanın (ör. e{:04d} → e0001) ya da düz sayaç için {n}. Öneri düzenlenebilir — alanı asla kısıtlamaz ve sayaç dergi+sayı kapsamında ilerler. Varsayılan: e{:04d}."
+
+msgid "plugins.generic.articleNumber.generator.suggested"
+msgstr "Önerilen sıradaki Makale Numarası: <strong>{$number}</strong> — kullanmak için yukarıdaki alana yazın."
+
+msgid "plugins.generic.articleNumber.generator.collision"
+msgstr "Uyarı: bu Makale Numarası, bu sayıdaki başka bir makale tarafından zaten kullanılıyor."
+
+# Uniqueness (Phase 1.4.0) -----------------------------------------------
+
+msgid "plugins.generic.articleNumber.settings.uniqueness"
+msgstr "Makale Numarası benzersizliği"
+
+msgid "plugins.generic.articleNumber.settings.uniqueness.journal"
+msgstr "Tüm dergide benzersiz (önerilen)"
+
+msgid "plugins.generic.articleNumber.settings.uniqueness.issue"
+msgstr "Yalnızca her sayı içinde benzersiz"
+
+msgid "plugins.generic.articleNumber.settings.uniqueness.description"
+msgstr "Bir Makale Numarasının tüm dergide mi (PLoS ve benzeri dergilerin kullandığı sürekli-yayın modeli — önerilen) yoksa yalnızca her sayı içinde mi (numaralandırmayı her sayıda yeniden başlatan dergiler için) benzersiz olması gerektiğini seçin. Yayımlanmamış bir makalede çakışan numara kaydı engellenir; yayımlanmış makaleler bundan etkilenmez."
+
+msgid "plugins.generic.articleNumber.uniqueness.error"
+msgstr "Bu Makale Numarası bu dergide başka bir makalede zaten kullanılıyor. Her makalenin benzersiz bir Makale Numarası olmalıdır."
+
+# In-panel migration (Phase 1.6.0) --------------------------------------
+
+msgid "plugins.generic.articleNumber.migrate.title"
+msgstr "Eski sayfa numaralarını Makale Numarasına dönüştür (yalnız bu dergi)"
+
+msgid "plugins.generic.articleNumber.migrate.intro"
+msgstr "Bazı dergiler, makale numaralarını (örneğin e0231470 gibi) geçmişte ayrı bir alan olmadığı için \"Sayfalar\" kutusuna yazmak zorunda kaldı. Bu araç onları bulup doğru yere — Makale Numarası alanına — kopyalar. \"Sayfalar\" alanınıza ASLA dokunmaz (değer olduğu gibi kalır), değeri değiştirmez (bulduğu numarayı aynen kopyalar), yalnızca bu dergiyi etkiler ve istediğiniz zaman geri alabilirsiniz. Nasıl çalışır: 1. \"Tara\" neyin dönüştürüleceğini gösterir, hiçbir şeyi değiştirmez. 2. Listeyi inceleyin. 3. \"Uygula\" yalnız Tara'da gördüğünüz numaraları Makale Numarası alanına kopyalar. 4. \"Geri Al\" bu aracın kopyaladığı numaraları kaldırır (elle girdikleriniz korunur)."
+
+msgid "plugins.generic.articleNumber.migrate.enableFirst"
+msgstr "Daha önce makale numaralarını Sayfalar alanına mı yazdınız? Yukarıdan bu dergi için Makale Numarası alanını etkinleştirin, Kaydet'e tıklayın, sonra bu pencereyi yeniden açın — o eski sayfa numaralarını Makale Numarasına dönüştürme bölümü burada görünecek."
+
+msgid "plugins.generic.articleNumber.migrate.threshold.label"
+msgstr "Bu ekrandan dönüştürme sınırı (makale sayısı)"
+
+msgid "plugins.generic.articleNumber.migrate.threshold.description"
+msgstr "Bu dergide dönüştürülecek çok makale varsa (varsayılan: 2000'den fazla), \"Uygula\" bu ekranda kilitlenir. Çok sayıda makaleyi web tarayıcıdan işlemek yarıda kesilebilir; bunun yerine size sunucudan çalıştırılacak güvenli bir komut gösterilir. \"Tara\" ve \"Geri Al\" her zaman çalışır, hiç kilitlenmez."
+
+msgid "plugins.generic.articleNumber.migrate.scan"
+msgstr "Tara"
+
+msgid "plugins.generic.articleNumber.migrate.apply"
+msgstr "Uygula"
+
+msgid "plugins.generic.articleNumber.migrate.rollback"
+msgstr "Geri Al"
+
+msgid "plugins.generic.articleNumber.migrate.scanning"
+msgstr "Taranıyor…"
+
+msgid "plugins.generic.articleNumber.migrate.applying"
+msgstr "Dönüştürülüyor…"
+
+msgid "plugins.generic.articleNumber.migrate.rolling"
+msgstr "Geri alınıyor…"
+
+msgid "plugins.generic.articleNumber.migrate.scan.summary"
+msgstr "%d% dönüştürülecek makale · %m% elle bakılması gerek · %r% gerçek sayfa aralığı (atlandı) · %h% zaten numaralı."
+
+msgid "plugins.generic.articleNumber.migrate.scan.none"
+msgstr "Bu dergide dönüştürülecek eski makale numarası bulunamadı."
+
+msgid "plugins.generic.articleNumber.migrate.scan.ready"
+msgstr "Yukarıdaki listeyi incelediniz mi? Bu numaraları Makale Numarası alanına kopyalamak için Uygula düğmesine tıklayın."
+
+msgid "plugins.generic.articleNumber.migrate.scan.locked"
+msgstr "%n% makale, bu ekranın sınırını (%t%) aşıyor. Bunun yerine sunucuda şu komutu çalıştırın:"
+
+msgid "plugins.generic.articleNumber.migrate.apply.confirm"
+msgstr "Bu işlem bu dergideki %n% makalenin numarasını Makale Numarası alanına kopyalayacak. Sayfa numaralarınız DEĞİŞMEZ ve geri alınabilir. Devam edilsin mi?"
+
+msgid "plugins.generic.articleNumber.migrate.apply.done"
+msgstr "Tamam — %n% makalenin numarası kopyalandı. Sayfalar alanı değiştirilmedi."
+
+msgid "plugins.generic.articleNumber.migrate.apply.stale"
+msgstr "Son taramanızdan bu yana veriler değişti, bu yüzden hiçbir şey kopyalanmadı. Lütfen tekrar Tarayıp listeyi inceleyin, sonra Uygulayın."
+
+msgid "plugins.generic.articleNumber.migrate.apply.nothing"
+msgstr "Kopyalanacak bir şey yok — dönüştürülecek makale kalmadı."
+
+msgid "plugins.generic.articleNumber.migrate.apply.aborted"
+msgstr "Durduruldu: kopyalama sırasında bir sayfa değeri beklenmedik şekilde değişti (#%id%). Başka hiçbir şey yazılmadı — lütfen inceleyin."
+
+msgid "plugins.generic.articleNumber.migrate.rollback.confirm"
+msgstr "Bu işlem YALNIZCA bu aracın kopyaladığı Makale Numaralarını kaldırır. Elle girdiğiniz Makale Numaraları korunur. Devam edilsin mi?"
+
+msgid "plugins.generic.articleNumber.migrate.rollback.done"
+msgstr "Geri alındı — %n% makalenin kopyalanmış numarası kaldırıldı."
+
+msgid "plugins.generic.articleNumber.migrate.examples"
+msgstr "Örnekler:"
+
+msgid "plugins.generic.articleNumber.migrate.error"
+msgstr "Bir şeyler ters gitti. Lütfen ayarları yeniden yükleyip tekrar deneyin."
+
+msgid "plugins.generic.articleNumber.migrate.error.noContext"
+msgstr "Taşıma bir dergi içinden çalıştırılmalıdır."
+
+msgid "plugins.generic.articleNumber.migrate.error.unauthorized"
+msgstr "Taşımayı çalıştırmak için dergi yöneticisi olmalısınız."
+
+msgid "plugins.generic.articleNumber.migrate.error.disabled"
+msgstr "Önce bu dergi için Makale Numarası özelliğini etkinleştirin."
+
+msgid "plugins.generic.articleNumber.field.error.published"
+msgstr "Bu makale yayımlanmış durumda; bu yüzden Makale Numarası değiştirilemez — yayımlanmış koordinat kalıcıdır ve değiştirilmesi atıf ve indeksleme eşleşmelerini bozar. Yayımlanmış makalelere sonradan Makale Numarası eklemek için eklentinin geçiş (migration) aracını kullanın."

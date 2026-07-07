@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE version SYSTEM "../../../lib/pkp/dtd/pluginVersion.dtd">
+
+<!--
+  * plugins/generic/articleNumber/version.xml
+  *
+  * Article Number Plugin for OJS — generic plugin (OJS 3.3).
+  * Adds a standards-compliant "Article Number" (elocation-id) field, stored
+  * separately from the page-range field, aligned with PKP's core property
+  * name `workNumber` for a zero-cost future hand-off to core.
+  *
+  * Distributed under the GNU GPL v3. For full terms see the file LICENSE.
+  *
+  * Plugin version information.
+  -->
+<version>
+    <application>articleNumber</application>
+    <type>plugins.generic</type>
+    <release>1.6.0</release>
+    <date>2026-06-30</date>
+    <lazy-load>1</lazy-load>
+    <class>ArticleNumberPlugin</class>
+</version>
