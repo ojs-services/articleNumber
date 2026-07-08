@@ -35,6 +35,12 @@ msgstr "Show the Article Number in the article details block"
 msgid "plugins.generic.articleNumber.settings.showInDetails.description"
 msgstr "If your theme already displays the Article Number itself (e.g. Nivo, Atlas, Axis), turn this off so it is not shown twice. This only affects the plugin's own item on the article page — it never changes export, citation or the Google Scholar fix."
 
+msgid "plugins.generic.articleNumber.settings.showInToc"
+msgstr "Show the Article Number in the issue table of contents"
+
+msgid "plugins.generic.articleNumber.settings.showInToc.description"
+msgstr "Shows the Article Number in each article's entry on the issue contents page, where a page number would normally appear (useful for digital-first journals whose articles have no page range). Turn off if your theme renders it there itself, or if you prefer not to show it in the listing. Affects only the table-of-contents display."
+
 # Editor metadata field --------------------------------------------------
 
 msgid "plugins.generic.articleNumber.field.label"

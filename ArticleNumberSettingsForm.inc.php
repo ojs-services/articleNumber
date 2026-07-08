@@ -40,6 +40,9 @@ class ArticleNumberSettingsForm extends Form
         // "hide" flag (truthy = hide). Default = show.
         $hide = $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_HIDE_DETAILS_BLOCK);
         $this->setData('showArticleNumberInDetails', !$hide);
+        // Same inverted "hide" flag for the issue table-of-contents display.
+        $hideToc = $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_HIDE_IN_TOC);
+        $this->setData('showArticleNumberInToc', !$hideToc);
         $this->setData('workNumberGeneratorEnabled', (bool) $this->plugin->getSetting(
             $this->contextId, ArticleNumberPlugin::SETTING_GENERATOR
         ));
@@ -55,7 +58,7 @@ class ArticleNumberSettingsForm extends Form
 
     public function readInputData()
     {
-        $this->readUserVars(array('enableWorkNumber', 'showArticleNumberInDetails', 'workNumberUniquenessScope', 'workNumberGeneratorEnabled', 'workNumberTemplate', 'workNumberMigrationThreshold'));
+        $this->readUserVars(array('enableWorkNumber', 'showArticleNumberInDetails', 'showArticleNumberInToc', 'workNumberUniquenessScope', 'workNumberGeneratorEnabled', 'workNumberTemplate', 'workNumberMigrationThreshold'));
 
         // Constrain scope to the allowed set; default to journal-wide.
         $scope = $this->getData('workNumberUniquenessScope');
@@ -95,6 +98,12 @@ class ArticleNumberSettingsForm extends Form
             $this->contextId,
             ArticleNumberPlugin::SETTING_HIDE_DETAILS_BLOCK,
             $this->getData('showArticleNumberInDetails') ? 0 : 1,
+            'int'
+        );
+        $this->plugin->updateSetting(
+            $this->contextId,
+            ArticleNumberPlugin::SETTING_HIDE_IN_TOC,
+            $this->getData('showArticleNumberInToc') ? 0 : 1,
             'int'
         );
         $this->plugin->updateSetting(

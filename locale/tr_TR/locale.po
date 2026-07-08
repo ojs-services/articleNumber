@@ -35,6 +35,12 @@ msgstr "Makale detayında makale bilgisi bloğunda makale numarasını göster"
 msgid "plugins.generic.articleNumber.settings.showInDetails.description"
 msgstr "Temanız makale numarası eklentisini doğrudan destekliyorsa (Nivo, Atlas, Axis gibi) bu özelliği pasif yapabilirsiniz; böylece numara iki kez gösterilmez. Bu yalnızca eklentinin makale sayfasındaki kendi gösterimini etkiler — export, atıf ve Google Scholar düzeltmesini değiştirmez."
 
+msgid "plugins.generic.articleNumber.settings.showInToc"
+msgstr "Makale Numarasını sayı içindekiler listesinde göster"
+
+msgid "plugins.generic.articleNumber.settings.showInToc.description"
+msgstr "Sayı içindekiler sayfasında her makalenin girişinde, normalde sayfa numarasının çıktığı yerde Makale Numarasını gösterir (sayfa aralığı olmayan dijital-öncelikli dergiler için yararlıdır). Temanız bunu kendisi basıyorsa ya da listede görünmesini istemiyorsanız kapatın. Yalnızca içindekiler gösterimini etkiler."
+
 # Editor metadata field --------------------------------------------------
 
 msgid "plugins.generic.articleNumber.field.label"

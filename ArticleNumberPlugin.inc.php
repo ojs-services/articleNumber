@@ -60,6 +60,16 @@ class ArticleNumberPlugin extends GenericPlugin
     public const SETTING_HIDE_DETAILS_BLOCK = 'hideArticleNumberInDetails';
 
     /**
+     * Per-journal: HIDE the Article Number in the issue table of contents
+     * (1 = hide, unset = show). Same inverted-flag storage as
+     * SETTING_HIDE_DETAILS_BLOCK (OJS reads falsy settings back as null). On by
+     * default so digital-first journals show a locator in the TOC where the page
+     * number normally appears; turn OFF for themes that render it there
+     * themselves (via the {article_number} helper) to avoid a duplicate.
+     */
+    public const SETTING_HIDE_IN_TOC = 'hideArticleNumberInToc';
+
+    /**
      * Per-journal cap on the in-panel "Apply" migration. When a Scan finds at
      * least this many candidate articles, the panel locks Apply and directs the
      * manager to the CLI tool (which has no web-request timeout). Scan and
@@ -147,6 +157,10 @@ class ArticleNumberPlugin extends GenericPlugin
             // LATE so it overrides the googleScholar plugin (which runs at the
             // default priority on the same hook).
             HookRegistry::register('Templates::Article::Details', array($this, 'displayArticleNumber'));
+            // Reader-facing: show the Article Number in the issue table of contents,
+            // where the page number normally appears (the core template only prints
+            // `pages`, which is empty for digital-first articles).
+            HookRegistry::register('Templates::Issue::Issue::Article', array($this, 'displayArticleNumberInToc'));
             HookRegistry::register('ArticleHandler::view', array($this, 'suppressScholarPages'), HOOK_SEQUENCE_LATE);
             // Expose a Smarty {article_number} helper so theme developers can
             // place the value wherever they want (e.g. in place of the page
@@ -470,6 +484,46 @@ class ArticleNumberPlugin extends GenericPlugin
 
         $templateMgr->assign('articleNumberValue', $workNumber);
         $output .= $templateMgr->fetch($this->getTemplateResource('frontend/articleNumber.tpl'));
+
+        return false;
+    }
+
+    /**
+     * Hook callback for `Templates::Issue::Issue::Article` — shows the Article
+     * Number in the issue table of contents, in the place a page number would
+     * normally occupy. Mirrors displayArticleNumber() but is gated by its own
+     * per-journal toggle (SETTING_HIDE_IN_TOC).
+     *
+     * @param string $hookName
+     * @param array  $args [0]=>&$params, [1]=>$templateMgr, [2]=>&$output
+     * @return bool false
+     */
+    public function displayArticleNumberInToc($hookName, $args)
+    {
+        $templateMgr =& $args[1];
+        $output =& $args[2];
+
+        $context = $this->_resolveContext();
+        if (!$context || !$this->isFeatureEnabled($context->getId())) {
+            return false;
+        }
+        // Per-journal opt-out (default shows). Turn ON when the theme renders the
+        // Article Number in the TOC itself, to avoid a duplicate.
+        if ($this->getSetting($context->getId(), self::SETTING_HIDE_IN_TOC)) {
+            return false;
+        }
+
+        $publication = $templateMgr->getTemplateVars('publication');
+        if (!is_object($publication)) {
+            return false;
+        }
+        $workNumber = $publication->getData(self::PROP_WORK_NUMBER);
+        if ($workNumber === null || $workNumber === '') {
+            return false;
+        }
+
+        $templateMgr->assign('articleNumberValue', $workNumber);
+        $output .= $templateMgr->fetch($this->getTemplateResource('frontend/articleNumberToc.tpl'));
 
         return false;
     }

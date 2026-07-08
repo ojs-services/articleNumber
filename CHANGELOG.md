@@ -6,6 +6,27 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 Target platform: **OJS 3.3.x** (PHP 7.4–8.1). Ports to 3.4 / 3.5 are planned.
 
+## [1.7.0] — 2026-07-08
+
+### Added
+- **Article Number in the issue table of contents.** The Article Number now
+  appears in each article's entry on the issue contents page, in the place a page
+  number normally occupies — so digital-first articles (with no page range) show
+  a locator in the listing instead of a blank. It works out of the box on themes
+  that use the standard article-summary template (e.g. the **default** and
+  **Manuscript** themes), via the `Templates::Issue::Issue::Article` hook; a theme
+  that renders its own article summary can place it with the `{article_number}`
+  helper.
+- Per-journal **"Show the Article Number in the issue table of contents"** toggle
+  (on by default; turn it off when the theme renders it there itself, to avoid a
+  duplicate).
+
+### Changed
+- On the article page, the Article Number item now appears **just after the
+  galley links and before the publication date** — a more natural place for a
+  locator — instead of at the very bottom of the details sidebar. Themes that
+  place the item themselves are unaffected.
+
 ## [1.6.0] — 2026-07-07
 
 First public release. A digital-first **Article Number** (*elocation-id*) for

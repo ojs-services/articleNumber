@@ -51,6 +51,18 @@
 			{fbvFormSection}
 				<p class="pkp_help_text">{translate key="plugins.generic.articleNumber.settings.showInDetails.description"}</p>
 			{/fbvFormSection}
+			{fbvFormSection list=true}
+				{fbvElement
+					type="checkbox"
+					id="showArticleNumberInToc"
+					value="1"
+					checked=$showArticleNumberInToc
+					label="plugins.generic.articleNumber.settings.showInToc"
+				}
+			{/fbvFormSection}
+			{fbvFormSection}
+				<p class="pkp_help_text">{translate key="plugins.generic.articleNumber.settings.showInToc.description"}</p>
+			{/fbvFormSection}
 
 			{fbvFormSection list=true label="plugins.generic.articleNumber.settings.uniqueness"}
 				{fbvElement type="radio" id="uniqueness-journal" name="workNumberUniquenessScope" value="journal" checked=$workNumberUniquenessScope|compare:"journal" label="plugins.generic.articleNumber.settings.uniqueness.journal"}
