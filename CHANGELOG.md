@@ -6,7 +6,7 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 Target platform: **OJS 3.3.x** (PHP 7.4–8.1). Ports to 3.4 / 3.5 are planned.
 
-## [1.6.0] — 2026-06-30
+## [1.6.0] — 2026-07-07
 
 First public release. A digital-first **Article Number** (*elocation-id*) for
 OJS, stored separately from the page-range field and integrated end-to-end —
