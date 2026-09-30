@@ -6,6 +6,14 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 Target platform: **OJS 3.3.x** (PHP 7.4–8.1). Ports to 3.4 / 3.5 are planned.
 
+## [1.7.0.0] — 2026-09-30 — ojs3.3
+
+### Changed
+- Adopted the standard product packaging scheme: four-part version numbering
+  (`1.7.0.0`), the `ojs3.3` line branch/tag naming (`ojs3.3-1.7.0.0`), and the
+  per-line Drive folder layout. No functional change — 1.7.0 and 1.7.0.0 are
+  the same plugin build.
+
 ## [1.7.0] — 2026-07-08
 
 ### Added
