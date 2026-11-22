@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Article Number Plugin 0.1.0\n"
+"Project-Id-Version: Article Number Plugin\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-26T00:00:00+00:00\n"
 "PO-Revision-Date: 2026-06-26T00:00:00+00:00\n"
@@ -52,7 +52,7 @@ msgstr "Bu makalenin dijital-öncelikli konum tanımlayıcısı (elocation-id) �
 msgid "plugins.generic.articleNumber.citation.articleLabel"
 msgstr "Makale"
 
-# Generator (Phase 6.5) --------------------------------------------------
+# Generator -----------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.settings.generator.title"
 msgstr "Makale Numarası Üreteci (opsiyonel)"
@@ -72,7 +72,7 @@ msgstr "Önerilen sıradaki Makale Numarası: <strong>{$number}</strong> — kul
 msgid "plugins.generic.articleNumber.generator.collision"
 msgstr "Uyarı: bu Makale Numarası, bu sayıdaki başka bir makale tarafından zaten kullanılıyor."
 
-# Uniqueness (Phase 1.4.0) -----------------------------------------------
+# Uniqueness --------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.settings.uniqueness"
 msgstr "Makale Numarası benzersizliği"
@@ -89,7 +89,7 @@ msgstr "Bir Makale Numarasının tüm dergide mi (PLoS ve benzeri dergilerin kul
 msgid "plugins.generic.articleNumber.uniqueness.error"
 msgstr "Bu Makale Numarası bu dergide başka bir makalede zaten kullanılıyor. Her makalenin benzersiz bir Makale Numarası olmalıdır."
 
-# In-panel migration (Phase 1.6.0) --------------------------------------
+# Migration ---------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.migrate.title"
 msgstr "Eski sayfa numaralarını Makale Numarasına dönüştür (yalnız bu dergi)"

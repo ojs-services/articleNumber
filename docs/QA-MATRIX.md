@@ -37,7 +37,7 @@ removed afterwards; the `pages` field was never written by any test.
 | 2.4 | Editor | Published-coordinate change blocked via `Publication::validate` | CLI | ✅ |
 | 2.5 | Editor | Edit without a `workNumber` key is not interfered with | CLI | ✅ |
 | 3.1 | Frontend | Article Number shown on the article page (default and custom themes) | Browser / HTML | ✅ |
-| 3.2 | Frontend | `citation_firstpage`/`citation_lastpage` suppressed when `workNumber` set | HTML source | ✅ |
+| 3.2 | Frontend | `citation_firstpage` carries the `workNumber`, no `citation_lastpage`, when `workNumber` is set (1.7.0.3, no tag on version URLs from 1.7.0.4) | HTML source | ✅ |
 | 3.3 | Frontend | Regression: page-based article keeps firstpage/lastpage | HTML source | ✅ |
 | 4.1 | Crossref | `<publisher_item><item_number item_number_type="article_number">` injected | CLI | ✅ |
 | 4.2 | Crossref | `<pages>` suppressed when `workNumber` set | CLI | ✅ |

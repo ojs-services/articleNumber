@@ -4,7 +4,31 @@ All notable changes to the **Article Number Plugin for OJS** are documented here
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and the
 project aims to follow [Semantic Versioning](https://semver.org/).
 
-Target platform: **OJS 3.3.x** (PHP 7.4–8.1). Ports to 3.4 / 3.5 are planned.
+Target platform: **OJS 3.3.x** (PHP 7.4–8.1). OJS 3.4 and 3.5 have their own package (2.x).
+
+## [1.7.0.4] — 2026-11-23 — ojs3.3
+
+### Changed
+- Google Scholar: nothing is added on version URLs (`article/view/ID/version/N`). OJS core adds no Scholar tags there, so the article number alone would have been a stray tag.
+- The Smarty `{article_number}` helper registration is guarded against a second registration.
+- README: Known limits now cover Native XML, DOAJ / PubMed / TR Dizin, OAI-PMH and themes that print the number themselves. Turkish README added.
+
+## [1.7.0.3] — 2026-11-22 — ojs3.3
+
+### Changed
+- Google Scholar: for an article with a number, `citation_firstpage` carries the number and no `citation_lastpage` is sent. Articles without a number are unchanged.
+
+## [1.7.0.2] — 2026-11-20 — ojs3.3
+
+### Changed
+- The article number in the on-page citation is HTML-escaped, in every citation style.
+- Google Scholar tags follow the version of the article the reader is viewing.
+- `version.xml` declares the OJS 3.3.0.x compatibility.
+
+## [1.7.0.1] — 2026-10-08 — ojs3.3
+
+### Added
+- Spanish (es_ES) translation.
 
 ## [1.7.0.0] — 2026-09-30 — ojs3.3
 

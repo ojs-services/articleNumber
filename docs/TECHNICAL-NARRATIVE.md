@@ -32,7 +32,7 @@ left export, citation, and guidance unfinished. This plugin completes the chain.
 | **Crossref** | `<publisher_item><item_number item_number_type="article_number">…</item_number></publisher_item>` | Mutually exclusive with `<pages>`/`<first_page>`. |
 | **JATS** (PMC, SciELO) | `<elocation-id>` | Replaces `<fpage>/<lpage>`; JATS4R errors if both are present. |
 | **PubMed / PMC** | `elocation-id` | Either `fpage` or `elocation-id` must exist, or the article is rejected. |
-| **Google Scholar** | *(no tag)* | Don't emit `citation_firstpage`/`lastpage` when an article number is set. |
+| **Google Scholar** | `citation_firstpage` | Emit the article number as `citation_firstpage` and no `citation_lastpage` when an article number is set. |
 | **CSL / citeproc** | `number` / locator, per style | Style-aware: APA renders "Article e298"; styles whose bundled CSL has no native article-number slot show the value in the locator position. |
 | **DOAJ / DataCite** | *(no discrete field)* | Document the limitation; never force the value into a page field. |
 
@@ -100,7 +100,7 @@ then be retired — or kept to provide whatever core still leaves unfinished
 
 ## Scope
 
-- Target: **OJS 3.3** (3.4 and 3.5 ports planned; the Crossref injection point
+- Target: **OJS 3.3** (OJS 3.4 and 3.5 have their own package; the Crossref injection point
   changes with the 3.4 DOI/Registration-Agency rework).
 - OMP/OPS are out of scope.
 

@@ -152,8 +152,9 @@ class ArticleNumberPlugin extends GenericPlugin
 
             // Phase 3: reader-facing. Show the Article Number on the article
             // landing page (theme-independent), and fix the Google Scholar meta
-            // bug by suppressing citation_firstpage/lastpage when an article
-            // number is the authoritative coordinate. The Scholar callback runs
+            // bug: when an article number is the authoritative coordinate,
+            // citation_firstpage carries the number and no citation_lastpage
+            // is sent. The Scholar callback runs
             // LATE so it overrides the googleScholar plugin (which runs at the
             // default priority on the same hook).
             HookRegistry::register('Templates::Article::Details', array($this, 'displayArticleNumber'));
@@ -161,7 +162,7 @@ class ArticleNumberPlugin extends GenericPlugin
             // where the page number normally appears (the core template only prints
             // `pages`, which is empty for digital-first articles).
             HookRegistry::register('Templates::Issue::Issue::Article', array($this, 'displayArticleNumberInToc'));
-            HookRegistry::register('ArticleHandler::view', array($this, 'suppressScholarPages'), HOOK_SEQUENCE_LATE);
+            HookRegistry::register('ArticleHandler::view', array($this, 'setScholarFirstPage'), HOOK_SEQUENCE_LATE);
             // Expose a Smarty {article_number} helper so theme developers can
             // place the value wherever they want (e.g. in place of the page
             // range, in the theme's native location). See docs/THEME-INTEGRATION.md.
@@ -684,7 +685,15 @@ class ArticleNumberPlugin extends GenericPlugin
         if (!is_object($templateMgr) || !method_exists($templateMgr, 'registerPlugin')) {
             return false;
         }
-        $templateMgr->registerPlugin('function', 'article_number', array($this, 'smartyArticleNumber'));
+        // Registering the same Smarty function twice throws, so skip it when this
+        // template manager already has it (e.g. a second plugin instance).
+        if (!isset($templateMgr->registered_plugins['function']['article_number'])) {
+            try {
+                $templateMgr->registerPlugin('function', 'article_number', array($this, 'smartyArticleNumber'));
+            } catch (\Exception $e) {
+                // Already registered elsewhere; nothing to do.
+            }
+        }
         self::$smartyRegistered = true;
         return false;
     }
@@ -717,25 +726,53 @@ class ArticleNumberPlugin extends GenericPlugin
     }
 
     /**
+     * The publication the reader is looking at on an `ArticleHandler::view` hook:
+     * the 4th hook argument (it can be an older version), else the current one.
+     *
+     * @param array $args Hook arguments
+     * @param Submission $submission
+     * @return Publication|null
+     */
+    private function _viewedPublication($args, $submission)
+    {
+        if (isset($args[3]) && is_object($args[3]) && method_exists($args[3], 'getData')) {
+            return $args[3];
+        }
+        return $submission->getCurrentPublication();
+    }
+
+    /**
      * Hook callback for `ArticleHandler::view` (registered at HOOK_SEQUENCE_LATE).
      *
-     * Google Scholar has no metadata tag for an article number; when editors put
-     * the value in `pages`, the googleScholar plugin emits a fake
-     * citation_firstpage == citation_lastpage, corrupting the indexed record.
-     * When a real workNumber is the authoritative coordinate, we blank the two
-     * page-meta header slots the googleScholar plugin filled (it runs at the
-     * default priority on this same hook; we run LATE), so they render nothing.
+     * Google Scholar matches a citation to a paper by journal, volume/issue and
+     * the number of the first page. Scholar has no separate tag for an article
+     * number, and publishers of continuously published journals put the article
+     * number in `citation_firstpage` and send no `citation_lastpage`.
+     * When a workNumber is set, we therefore replace the two page-meta header
+     * slots the googleScholar plugin fills (it runs at the default priority on
+     * this same hook; we run LATE): `citation_firstpage` carries the article
+     * number and `citation_lastpage` is not rendered, so the fake
+     * firstpage == lastpage pair made from `pages` never goes out.
+     * Articles without a workNumber are not touched.
      * Core is never modified and the googleScholar plugin is never forked.
      *
      * @param string $hookName
-     * @param array  $args [0]=>$request, [1]=>$issue, [2]=>$submission
+     * @param array  $args [0]=>$request, [1]=>$issue, [2]=>$submission, [3]=>$publication
      * @return bool false
      */
-    public function suppressScholarPages($hookName, $args)
+    public function setScholarFirstPage($hookName, $args)
     {
         $request = $args[0];
         $submission = isset($args[2]) ? $args[2] : null;
         if (!$request || !is_object($submission)) {
+            return false;
+        }
+
+        // Like the core googleScholar plugin, add nothing on a version URL
+        // (article/view/ID/version/PUBID): it only tags the canonical page, so a
+        // lone citation_firstpage there would be an orphan tag.
+        $requestArgs = $request->getRequestedArgs();
+        if (count($requestArgs) > 1 && $requestArgs[1] === 'version') {
             return false;
         }
 
@@ -744,7 +781,7 @@ class ArticleNumberPlugin extends GenericPlugin
             return false;
         }
 
-        $publication = $submission->getCurrentPublication();
+        $publication = $this->_viewedPublication($args, $submission);
         if (!$publication) {
             return false;
         }
@@ -753,11 +790,15 @@ class ArticleNumberPlugin extends GenericPlugin
             return false;
         }
 
-        // Blank the same header slots the googleScholar plugin uses. addHeader()
-        // keys by name (default priority/context), so this overwrites its entry
-        // with an empty string -> no firstpage/lastpage tag is rendered.
+        // Use the same header slots as the googleScholar plugin. addHeader() keys
+        // by name (default priority/context), so this replaces its entries: the
+        // first-page slot gets the article number, the last-page slot is emptied
+        // (an empty string renders nothing).
         $templateMgr = TemplateManager::getManager($request);
-        $templateMgr->addHeader('googleScholarStartPage', '');
+        $templateMgr->addHeader(
+            'googleScholarStartPage',
+            '<meta name="citation_firstpage" content="' . htmlspecialchars((string) $workNumber, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"/>'
+        );
         $templateMgr->addHeader('googleScholarEndPage', '');
 
         return false;
@@ -938,7 +979,7 @@ class ArticleNumberPlugin extends GenericPlugin
         if (!$context || !$this->isFeatureEnabled($context->getId())) {
             return false;
         }
-        $publication = $submission->getCurrentPublication();
+        $publication = $this->_viewedPublication($args, $submission);
         $workNumber = $publication ? $publication->getData(self::PROP_WORK_NUMBER) : null;
         if ($workNumber === null || $workNumber === '') {
             return false;
@@ -959,9 +1000,14 @@ class ArticleNumberPlugin extends GenericPlugin
             return false;
         }
 
-        $fixed = preg_replace(
-            '/\bpp?\.\s*' . preg_quote($workNumber, '/') . '/u',
-            'Art. no. ' . $workNumber,
+        // The citation carries the number HTML-escaped (see mapCitationWorkNumber),
+        // so look for, and write back, the escaped form.
+        $safe = htmlspecialchars((string) $workNumber, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $fixed = preg_replace_callback(
+            '/\bpp?\.\s*' . preg_quote($safe, '/') . '/u',
+            function () use ($safe) {
+                return 'Art. no. ' . $safe;
+            },
             $citation
         );
         if ($fixed !== null && $fixed !== $citation) {
@@ -1071,16 +1117,24 @@ class ArticleNumberPlugin extends GenericPlugin
         // Styles that render `number` natively for article-journal → number only.
         $nativeNumberStyles = array('modern-language-association');
 
+        // The CSL renderer HTML-escapes the `number` variable but passes `page`
+        // through as it is. The citation is shown as HTML, so the value that goes
+        // into `page` is escaped here (plain-text downloads keep it as typed).
+        $isPlainText = in_array($styleId, array('ris', 'bibtex'), true);
+        $pageValue = $isPlainText
+            ? (string) $workNumber
+            : htmlspecialchars((string) $workNumber, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
         if (stripos($styleId, 'apa') !== false) {
             // APA (Group 2, special): inject the labeled locator into `page`.
-            $citationData->page = __('plugins.generic.articleNumber.citation.articleLabel') . ' ' . $workNumber;
+            $citationData->page = __('plugins.generic.articleNumber.citation.articleLabel') . ' ' . $pageValue;
         } elseif (in_array($styleId, $nativeNumberStyles, true) || stripos($styleId, 'modern-language') !== false) {
             // Group 1 (native number): single, unlabeled locator; page stays empty.
             $citationData->number = (string) $workNumber;
         } else {
             // Group 2 (no native number): the number must ride in `page` or the
             // locator is lost. (ABNT/Harvard/IEEE add an unavoidable "p." label.)
-            $citationData->page = (string) $workNumber;
+            $citationData->page = $pageValue;
         }
 
         return false;

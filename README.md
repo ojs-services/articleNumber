@@ -1,5 +1,7 @@
 # Article Number Plugin for OJS
 
+[Türkçe](README_TR.md)
+
 A generic OJS **3.3** plugin that manages a digital-first **Article Number**
 (*elocation-id*) as metadata **separate from the page-range field** — the way
 digital-first journals actually identify articles (e.g. *PLoS ONE 15(4):
@@ -13,7 +15,7 @@ PMC/PubMed need an `<elocation-id>`. This plugin fills that gap end-to-end while
 
 **Requirements:** OJS 3.3.x · PHP 7.4–8.1 · MySQL/MariaDB. Works on single- and
 multi-journal installs, the default theme, and custom themes. OMP/OPS are out of
-scope; 3.4 / 3.5 ports are planned.
+scope. OJS 3.4 and 3.5 have their own package (2.x).
 
 ## Design contract
 
@@ -39,7 +41,7 @@ scope; 3.4 / 3.5 ports are planned.
 | Quick Submit | The same field is available in the Quick Submit import form. |
 | Uniqueness | The same Article Number cannot be assigned to two articles in one journal; on an unpublished article this is blocked at save. Scope is a per-journal setting (journal-wide by default; per-issue optional). |
 | Reader page | Shows "Article Number: X" on the article landing page (theme-independent); can be hidden per journal when the theme renders it itself. |
-| Google Scholar | Suppresses fake `citation_firstpage`/`citation_lastpage` when an article number is set. |
+| Google Scholar | When an article number is set, `citation_firstpage` carries the number (as PLOS does) and no `citation_lastpage` is sent; the fake first = last page pair made from *Pages* is not sent. Nothing is added on version URLs (`article/view/ID/version/N`), where OJS core adds no Scholar tags either. |
 | Crossref | Injects `<publisher_item><item_number item_number_type="article_number">` and drops `<pages>`; XSD-valid; no fork. |
 | JATS | Replaces `<fpage>/<lpage>` with `<elocation-id>` (JATS4R-safe). |
 | Citation | Style-aware mapping across the bundled CSL styles (e.g. APA "Article e298"); see *Known behavior & limitations*. |
@@ -154,8 +156,8 @@ See [docs/THEME-INTEGRATION.md](docs/THEME-INTEGRATION.md) for the full guide.
    removes only the values the tool itself derived.
 7. **"Show the Article Number in the article details block"** setting: journals
    whose theme already renders the Article Number (Nivo/Atlas/Axis) can turn
-   this off to prevent a duplicate display. It affects only the plugin's own
-   on-page card — **not** export, citation, or the Google Scholar fix.
+   this off to prevent a duplicate display (otherwise the number is shown
+   twice). It affects only the plugin's own on-page card — **not** export, citation, or the Google Scholar fix.
 8. **ABNT, Harvard and IEEE label the Article Number "p." (page)** — e.g.
    "p. e0500". The citation mapping is style-aware (since 1.5.0): styles that
    render the CSL `number` variable for `article-journal` (MLA) receive `number`
@@ -178,6 +180,15 @@ See [docs/THEME-INTEGRATION.md](docs/THEME-INTEGRATION.md) for the full guide.
    standards-compliant article-number metadata is delivered through Crossref
    (`item_number`) and JATS (`elocation-id`). RIS `C7` may be revisited based on
    demand.
+
+10. **Native XML export and import do not carry the Article Number.** An
+    article exported and imported into another journal arrives without it; its
+    *Pages* value does arrive.
+11. **DOAJ, PubMed and TR Dizin exports** read the *Pages* field, not the Article
+    Number. (Crossref reads the number; see above.)
+12. **OAI-PMH:** none of the bundled formats (`oai_dc`, `oai_marc`, `marcxml`,
+    `rfc1807`) carries the number. It appears as `elocation-id` only in a JATS
+    format, and only where a JATS producer is installed (item 3).
 
 ## License
 

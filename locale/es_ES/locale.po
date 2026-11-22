@@ -1,0 +1,175 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Article Number Plugin\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: OJS Services <info@ojs-services.com>\n"
+"Language-Team: Spanish\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Plugin metadata --------------------------------------------------------
+
+msgid "plugins.generic.articleNumber.name"
+msgstr "Módulo Número de artículo"
+
+msgid "plugins.generic.articleNumber.description"
+msgstr "Gestiona un «Número de artículo» (elocation-id) propio de la publicación digital como metadato independiente del campo de páginas: conforme a los estándares de Crossref, JATS/PMC y Google Scholar, y alineado con el nombre de la propiedad del núcleo de PKP para un traspaso futuro sin migración."
+
+# Settings ---------------------------------------------------------------
+
+msgid "plugins.generic.articleNumber.settings.title"
+msgstr "Ajustes de Número de artículo"
+
+msgid "plugins.generic.articleNumber.settings.enableWorkNumber"
+msgstr "Activar el campo Número de artículo en esta revista"
+
+msgid "plugins.generic.articleNumber.settings.enableWorkNumber.description"
+msgstr "Si se activa, el equipo editorial puede registrar en cada artículo un Número de artículo (elocation-id), que se guarda aparte del intervalo de páginas. Déjelo desactivado si la revista usa la paginación tradicional. Desactivarlo no cambia ningún comportamiento existente de OJS."
+
+msgid "plugins.generic.articleNumber.settings.showInDetails"
+msgstr "Mostrar el Número de artículo en el bloque de detalles del artículo"
+
+msgid "plugins.generic.articleNumber.settings.showInDetails.description"
+msgstr "Si su tema ya muestra el Número de artículo por sí mismo (p. ej., Nivo, Atlas, Axis), desactive esta opción para que no aparezca dos veces. Solo afecta al elemento que el módulo añade en la página del artículo; nunca cambia la exportación, la cita ni la corrección para Google Scholar."
+
+msgid "plugins.generic.articleNumber.settings.showInToc"
+msgstr "Mostrar el Número de artículo en la tabla de contenidos del número"
+
+msgid "plugins.generic.articleNumber.settings.showInToc.description"
+msgstr "Muestra el Número de artículo en la entrada de cada artículo en la página de contenidos del número, donde normalmente aparecería el número de página (útil para revistas de publicación digital cuyos artículos no tienen intervalo de páginas). Desactívelo si su tema ya lo muestra ahí o si prefiere no mostrarlo en el listado. Solo afecta a la visualización de la tabla de contenidos."
+
+# Editor metadata field --------------------------------------------------
+
+msgid "plugins.generic.articleNumber.field.label"
+msgstr "Número de artículo"
+
+msgid "plugins.generic.articleNumber.field.description"
+msgstr "El localizador de este artículo en la publicación digital (elocation-id), p. ej., e0231470 o P2.16. Úselo <strong>en lugar de</strong> un intervalo de páginas: cuando hay un Número de artículo, este pasa a ser la referencia válida y el campo Páginas debe quedar vacío. Use Páginas solo en los artículos que tengan un intervalo real de páginas impresas. No rellene nunca los dos: eso genera metadatos erróneos en Crossref, JATS/PMC y Google Scholar."
+
+msgid "plugins.generic.articleNumber.citation.articleLabel"
+msgstr "Artículo"
+
+# Generator --------------------------------------------------------------
+
+msgid "plugins.generic.articleNumber.settings.generator.title"
+msgstr "Generador de Número de artículo (opcional)"
+
+msgid "plugins.generic.articleNumber.settings.generator.enabled"
+msgstr "Sugerir un Número de artículo correlativo para los artículos nuevos no publicados"
+
+msgid "plugins.generic.articleNumber.settings.generator.template"
+msgstr "Plantilla"
+
+msgid "plugins.generic.articleNumber.settings.generator.template.description"
+msgstr "Patrón del número sugerido. Use {:04d} para un contador con ceros a la izquierda (p. ej., e{:04d} → e0001) o {n} para un contador simple. La sugerencia se puede editar: nunca limita el campo, y el contador es independiente para cada revista y número. Valor predeterminado: e{:04d}."
+
+msgid "plugins.generic.articleNumber.generator.suggested"
+msgstr "Siguiente Número de artículo sugerido: <strong>{$number}</strong>. Escríbalo en el campo de arriba para usarlo."
+
+msgid "plugins.generic.articleNumber.generator.collision"
+msgstr "Aviso: este Número de artículo ya lo usa otro artículo de este número."
+
+# Uniqueness -------------------------------------------------------------
+
+msgid "plugins.generic.articleNumber.settings.uniqueness"
+msgstr "Unicidad del Número de artículo"
+
+msgid "plugins.generic.articleNumber.settings.uniqueness.journal"
+msgstr "Único en toda la revista (recomendado)"
+
+msgid "plugins.generic.articleNumber.settings.uniqueness.issue"
+msgstr "Único solo dentro de cada número"
+
+msgid "plugins.generic.articleNumber.settings.uniqueness.description"
+msgstr "Elija si el Número de artículo debe ser único en toda la revista (el modelo de publicación continua que usan PLoS y revistas similares; recomendado) o solo dentro de cada número (para revistas que reinician la numeración en cada número). No se permite guardar un duplicado en un artículo no publicado; los artículos ya publicados nunca se ven afectados."
+
+msgid "plugins.generic.articleNumber.uniqueness.error"
+msgstr "Este Número de artículo ya lo usa otro artículo de esta revista. Cada artículo debe tener un Número de artículo único."
+
+# In-panel migration -----------------------------------------------------
+
+msgid "plugins.generic.articleNumber.migrate.title"
+msgstr "Convertir números de página antiguos en Números de artículo (solo esta revista)"
+
+msgid "plugins.generic.articleNumber.migrate.intro"
+msgstr "Algunas revistas tuvieron que escribir los números de artículo (p. ej., e0231470) en la casilla «Páginas» porque antes no existía un campo aparte. Esta herramienta los encuentra y los copia al lugar correcto: el campo Número de artículo. NUNCA toca el campo «Páginas» (el valor queda exactamente como está), no modifica el valor (copia el número tal como lo encuentra), solo afecta a esta revista y se puede deshacer en cualquier momento. Cómo funciona: 1. «Analizar» muestra lo que se convertiría, sin cambiar nada. 2. Revise la lista. 3. «Aplicar» copia al campo Número de artículo solo los números que vio en el análisis. 4. «Deshacer» elimina los números que copió esta herramienta (lo que haya introducido a mano se conserva)."
+
+msgid "plugins.generic.articleNumber.migrate.enableFirst"
+msgstr "¿Guardó anteriormente números de artículo en el campo Páginas? Active arriba el campo Número de artículo para esta revista, haga clic en Guardar y vuelva a abrir esta ventana: aquí aparecerá una sección para convertir esos números de página antiguos en Números de artículo."
+
+msgid "plugins.generic.articleNumber.migrate.threshold.label"
+msgstr "Límite de conversión para esta pantalla (número de artículos)"
+
+msgid "plugins.generic.articleNumber.migrate.threshold.description"
+msgstr "Si la revista tiene muchos artículos por convertir (valor predeterminado: más de 2000), «Aplicar» queda bloqueado en esta pantalla. Procesar un gran número de artículos desde el navegador puede interrumpirse a mitad; en su lugar se muestra una orden segura para ejecutar en el servidor. «Analizar» y «Deshacer» funcionan siempre y nunca se bloquean."
+
+msgid "plugins.generic.articleNumber.migrate.scan"
+msgstr "Analizar"
+
+msgid "plugins.generic.articleNumber.migrate.apply"
+msgstr "Aplicar"
+
+msgid "plugins.generic.articleNumber.migrate.rollback"
+msgstr "Deshacer"
+
+msgid "plugins.generic.articleNumber.migrate.scanning"
+msgstr "Analizando…"
+
+msgid "plugins.generic.articleNumber.migrate.applying"
+msgstr "Convirtiendo…"
+
+msgid "plugins.generic.articleNumber.migrate.rolling"
+msgstr "Deshaciendo…"
+
+msgid "plugins.generic.articleNumber.migrate.scan.summary"
+msgstr "%d% artículo(s) por convertir · %m% requieren revisión manual · %r% intervalo(s) de páginas reales omitidos · %h% ya tienen número."
+
+msgid "plugins.generic.articleNumber.migrate.scan.none"
+msgstr "No se encontraron en esta revista números de artículo antiguos por convertir."
+
+msgid "plugins.generic.articleNumber.migrate.scan.ready"
+msgstr "¿Ha revisado la lista de arriba? Haga clic en Aplicar para copiar estos números al campo Número de artículo."
+
+msgid "plugins.generic.articleNumber.migrate.scan.locked"
+msgstr "%n% artículos superan el límite de esta pantalla (%t%). Ejecute esta orden en el servidor:"
+
+msgid "plugins.generic.articleNumber.migrate.apply.confirm"
+msgstr "Se copiará el número de %n% artículo(s) de esta revista al campo Número de artículo. Los números de página NO cambiarán y la operación se puede deshacer. ¿Continuar?"
+
+msgid "plugins.generic.articleNumber.migrate.apply.done"
+msgstr "Hecho: se copió el número de %n% artículo(s). El campo Páginas no se modificó."
+
+msgid "plugins.generic.articleNumber.migrate.apply.stale"
+msgstr "Los datos cambiaron desde el último análisis, así que no se copió nada. Vuelva a Analizar, revise la lista y después Aplique."
+
+msgid "plugins.generic.articleNumber.migrate.apply.nothing"
+msgstr "No hay nada que copiar: no quedan artículos por convertir."
+
+msgid "plugins.generic.articleNumber.migrate.apply.aborted"
+msgstr "Detenido: un valor de páginas cambió de forma inesperada durante la copia (#%id%). No se escribió nada más; revíselo."
+
+msgid "plugins.generic.articleNumber.migrate.rollback.confirm"
+msgstr "Se eliminarán SOLO los Números de artículo que copió esta herramienta. Los Números de artículo introducidos a mano se conservan. ¿Continuar?"
+
+msgid "plugins.generic.articleNumber.migrate.rollback.done"
+msgstr "Deshecho: se eliminó el número copiado de %n% artículo(s)."
+
+msgid "plugins.generic.articleNumber.migrate.examples"
+msgstr "Ejemplos:"
+
+msgid "plugins.generic.articleNumber.migrate.error"
+msgstr "Algo salió mal. Vuelva a cargar los ajustes e inténtelo de nuevo."
+
+msgid "plugins.generic.articleNumber.migrate.error.noContext"
+msgstr "La migración debe ejecutarse desde una revista."
+
+msgid "plugins.generic.articleNumber.migrate.error.unauthorized"
+msgstr "Debe ser gestor/a de la revista para ejecutar la migración."
+
+msgid "plugins.generic.articleNumber.migrate.error.disabled"
+msgstr "Active primero la función Número de artículo en esta revista."
+
+msgid "plugins.generic.articleNumber.field.error.published"
+msgstr "Este artículo ya está publicado, por lo que su Número de artículo no se puede cambiar: la referencia publicada es permanente y cambiarla rompería la correspondencia de citas e indexación. Para asignar un Número de artículo a artículos ya publicados, use la herramienta de migración del módulo."

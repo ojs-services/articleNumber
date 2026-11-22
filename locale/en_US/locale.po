@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Article Number Plugin 0.1.0\n"
+"Project-Id-Version: Article Number Plugin\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-26T00:00:00+00:00\n"
 "PO-Revision-Date: 2026-06-26T00:00:00+00:00\n"
@@ -52,7 +52,7 @@ msgstr "The digital-first locator for this article (elocation-id), e.g. e0231470
 msgid "plugins.generic.articleNumber.citation.articleLabel"
 msgstr "Article"
 
-# Generator (Phase 6.5) --------------------------------------------------
+# Generator -----------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.settings.generator.title"
 msgstr "Article Number Generator (optional)"
@@ -72,7 +72,7 @@ msgstr "Suggested next Article Number: <strong>{$number}</strong> — type it in
 msgid "plugins.generic.articleNumber.generator.collision"
 msgstr "Warning: this Article Number is already used by another article in this issue."
 
-# Uniqueness (Phase 1.4.0) -----------------------------------------------
+# Uniqueness --------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.settings.uniqueness"
 msgstr "Article Number uniqueness"
@@ -89,7 +89,7 @@ msgstr "Choose whether an Article Number must be unique across the entire journa
 msgid "plugins.generic.articleNumber.uniqueness.error"
 msgstr "This Article Number is already used by another article in this journal. Each article must have a unique Article Number."
 
-# In-panel migration (Phase 1.6.0) --------------------------------------
+# Migration ---------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.migrate.title"
 msgstr "Convert legacy page numbers into Article Numbers (this journal only)"

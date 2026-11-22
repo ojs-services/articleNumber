@@ -7,3 +7,7 @@
 *.gif binary
 *.gz  binary
 *.zip binary
+
+# Repository files that do not belong in the plugin package
+/.gitattributes export-ignore
+/.gitignore export-ignore
