@@ -150,6 +150,7 @@
 			none: "{translate key="plugins.generic.articleNumber.migrate.scan.none"}",
 				articles: "{translate key="plugins.generic.articleNumber.migrate.scan.articles"}",
 				versions: "{translate key="plugins.generic.articleNumber.migrate.scan.versions"}",
+				unpublished: "{translate key="plugins.generic.articleNumber.migrate.scan.unpublished"}",
 				manualTitle: "{translate key="plugins.generic.articleNumber.migrate.manual.title"}",
 				colId: "{translate key="plugins.generic.articleNumber.migrate.manual.col.id"}",
 				colIssue: "{translate key="plugins.generic.articleNumber.migrate.manual.col.issue"}",
@@ -213,6 +214,7 @@
 				if (st.articles) {
 					out += esc(fill(s.articles, {a: st.articles, p: st.published, o: st.other}));
 					if (st.versions > st.articles) out += ' ' + esc(fill(s.versions, {v: st.versions}));
+					if (p.counts && p.counts.unpublished) out += ' ' + esc(fill(s.unpublished, {u: p.counts.unpublished}));
 					out += '<br>';
 				}
 				return out;

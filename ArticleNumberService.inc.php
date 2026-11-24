@@ -212,7 +212,7 @@ class ArticleNumberService
         $dao = DAORegistry::getDAO('PublicationDAO');
         $submissionService = Services::get('submission');
 
-        $counts = array('derive' => 0, 'manual' => 0, 'realpage' => 0, 'empty' => 0, 'hasWorkNumber' => 0, 'changed' => 0, 'duplicate' => 0);
+        $counts = array('derive' => 0, 'manual' => 0, 'realpage' => 0, 'empty' => 0, 'hasWorkNumber' => 0, 'changed' => 0, 'duplicate' => 0, 'unpublished' => 0);
         $samples = array('derive' => array(), 'manual' => array(), 'duplicate' => array());
         // Track derived values within this run to catch intra-batch duplicates.
         $derivedSeen = array();
@@ -254,7 +254,8 @@ class ArticleNumberService
 
             // dry-run / apply
             $stats['articles']++;
-            if ((int) $submission->getData('status') === 3) { // STATUS_PUBLISHED
+            $status = (int) $submission->getData('status');
+            if ($status === 3) { // STATUS_PUBLISHED
                 $stats['published']++;
             } else {
                 $stats['other']++;
@@ -271,6 +272,17 @@ class ArticleNumberService
                 'duplicate' => false,
                 'articleNumber' => '',
             );
+
+            // Only published (3) and scheduled (5) articles are converted. An article
+            // still in progress (or declined) is left alone: it gets its number the
+            // normal way, typed in the Issue form before publication, or from a later
+            // Scan once it is published.
+            if ($status !== 3 && $status !== 5) {
+                $counts['unpublished']++;
+                $record['result'] = 'unpublished';
+                $records[] = $record;
+                continue;
+            }
 
             if ($existingWn !== null && $existingWn !== '') {
                 $counts['hasWorkNumber']++;

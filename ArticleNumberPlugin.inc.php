@@ -1526,6 +1526,7 @@ class ArticleNumberPlugin extends GenericPlugin
             'skip' => 'skipped: real page range',
             'numbered' => 'skipped: already has an Article Number',
             'nopages' => 'skipped: no pages value',
+            'unpublished' => 'skipped: not published (in progress or declined)',
         );
         $reasonNames = array(
             'number' => 'bare number: could be a real single page',

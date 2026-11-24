@@ -6,6 +6,14 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 Target platform: **OJS 3.3.x** (PHP 7.4–8.1). OJS 3.4 and 3.5 have their own package (2.x).
 
+## [1.7.0.6] — 2026-11-24 — ojs3.3
+
+### Changed
+- The migration (Scan / Apply / command line) converts only published and scheduled articles. Articles in progress or declined are skipped and reported as "not published"; they get their number in the Issue form before publication, or from a later Scan once published. The CSV lists them with that reason.
+
+### Türkçe
+- Taşıma (Tara / Uygula / komut satırı) yalnız yayımlanmış ve zamanlanmış makaleleri dönüştürür. Devam eden ya da reddedilen makaleler "yayımlanmamış" olarak atlanır ve bildirilir; numarayı yayımdan önce Sayı formunda alır ya da yayımlandıktan sonraki bir Taramada. CSV bunları bu nedenle listeler.
+
 ## [1.7.0.5] — 2026-11-24 — ojs3.3
 
 ### Added

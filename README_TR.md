@@ -70,7 +70,7 @@ Numarası alanına kopyalayın ya da **Geri al** ile kaldırın. Uygula yalnızc
 sonra etkinleşir ve onay ister. Tarama, elle kontrol gerektiren her değeri sonucun en
 üstünde tam liste olarak gösterir (yayın no, sayı, makale başlığı, *Sayfalar* değeri ve
 nedeni); ardından sayımlar gelir: dergideki makaleler (yayımlanmış ve diğer), toplam
-yayın sürümü ve dönüştürülecekler. Yalnız her makalenin güncel sürümü dönüştürülür.
+yayın sürümü ve dönüştürülecekler. Yalnız her makalenin güncel sürümü dönüştürülür. Yalnız yayımlanmış ve zamanlanmış makaleler dönüştürülür; devam eden ya da reddedilen makaleler atlanır ve öyle gösterilir (numarayı yayımdan önce Sayı formunda alır ya da yayımlandıktan sonraki bir Taramada).
 **Tam sonucu indir (CSV)** makale başına bir satır verir: dönüştürülecek, elle bakılacak,
 atlanan (gerçek sayfa aralığı, zaten numaralı, sayfa yok).
 

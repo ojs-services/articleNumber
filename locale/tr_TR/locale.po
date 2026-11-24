@@ -222,3 +222,6 @@ msgstr "Makale başına bir satır: dönüştürülecek, elle bakılacak, atlana
 
 msgid "plugins.generic.articleNumber.settings.showInDetails.themeNote"
 msgstr "Etkin temanız Makale Numarasını zaten kendisi gösteriyor; bu yüzden bu seçenek varsayılan olarak kapalıdır. Eklentinin kendi öğesini de istiyorsanız açın."
+
+msgid "plugins.generic.articleNumber.migrate.scan.unpublished"
+msgstr "%u% makale yayımlanmamış (devam eden ya da reddedilmiş) olduğu için atlandı. Makale numarasını yayımdan önce Sayı formunda alır ya da yayımlandıktan sonraki bir Taramada."

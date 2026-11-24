@@ -68,7 +68,7 @@ class migrateArticleNumbers extends CommandLineTool {
 
         $service = new ArticleNumberService();
 
-        $grand = array('derive' => 0, 'manual' => 0, 'realpage' => 0, 'empty' => 0, 'hasWorkNumber' => 0, 'changed' => 0, 'duplicate' => 0);
+        $grand = array('derive' => 0, 'manual' => 0, 'realpage' => 0, 'empty' => 0, 'hasWorkNumber' => 0, 'changed' => 0, 'duplicate' => 0, 'unpublished' => 0);
 
         echo "== Article Number migration ==  mode={$this->mode}  scope={$this->scope}\n\n";
 
@@ -113,6 +113,7 @@ class migrateArticleNumbers extends CommandLineTool {
             echo "  real page ranges (skipped): {$grand['realpage']}\n";
             echo "  empty pages (skipped):      {$grand['empty']}\n";
             echo "  already had workNumber:     {$grand['hasWorkNumber']}\n";
+            echo "  not published (skipped):    {$grand['unpublished']}\n";
             if ($grand['duplicate']) echo "  DUPLICATES flagged:          {$grand['duplicate']} (derived anyway — see per-journal list)\n";
             if ($this->mode === 'apply') echo "  WRITTEN (workNumber derived): {$grand['changed']}\n";
             if ($this->mode === 'dry-run') echo "  (dry-run: nothing was written)\n";

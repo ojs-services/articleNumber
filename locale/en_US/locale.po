@@ -222,3 +222,6 @@ msgstr "One row per article: to convert, to check by hand, skipped and already n
 
 msgid "plugins.generic.articleNumber.settings.showInDetails.themeNote"
 msgstr "Your active theme already shows the Article Number itself, so this is off by default. Turn it on only if you also want the plugin's own item."
+
+msgid "plugins.generic.articleNumber.migrate.scan.unpublished"
+msgstr "%u% article(s) were skipped because they are not published (in progress or declined). An article gets its number in the Issue form before publication, or from a later Scan once it is published."

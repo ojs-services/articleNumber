@@ -73,7 +73,7 @@ enabled only after a Scan, and is confirmation-gated. The Scan lists every value
 that needs a manual check in full at the top of the result (publication ID,
 issue, article title, the *Pages* value and why), followed by the counts:
 articles in the journal (published and not), publication versions in total, and
-what will be converted. Only the current version of each article is converted.
+what will be converted. Only the current version of each article is converted. Only published and scheduled articles are converted; articles still in progress or declined are skipped and shown as such (they get their number in the Issue form before publication, or from a later Scan once published).
 **Download the full result (CSV)** gives one row per article: to convert, to
 check by hand, skipped (real page range, already numbered, no pages).
 
