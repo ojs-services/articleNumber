@@ -81,7 +81,7 @@ class migrateArticleNumbers extends CommandLineTool {
             $samples = $res['samples'];
             if ($this->mode !== 'rollback' && !empty($res['stats']['articles'])) {
                 $st = $res['stats'];
-                echo "  {$st['articles']} article(s): {$st['published']} published, {$st['other']} in progress, scheduled or declined; {$st['versions']} publication version(s) in total (only the current version of each article is converted).\n";
+                echo "  {$st['articles']} article(s): {$st['published']} published or scheduled, {$st['other']} in progress or declined; {$st['versions']} publication version(s) in total (only the current version of each article is converted).\n";
             }
 
             if (!empty($samples['derive'])) {

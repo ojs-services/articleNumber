@@ -67,7 +67,20 @@
 				<p class="pkp_help_text">{translate key="plugins.generic.articleNumber.settings.showInToc.description"}</p>
 			{/fbvFormSection}
 
-			{fbvFormSection list=true label="plugins.generic.articleNumber.settings.uniqueness"}
+			{fbvFormSection list=true}
+					{fbvElement
+						type="checkbox"
+						id="deriveNumberOnPublish"
+						value="1"
+						checked=$deriveNumberOnPublish
+						label="plugins.generic.articleNumber.settings.deriveOnPublish"
+					}
+				{/fbvFormSection}
+				{fbvFormSection}
+					<p class="pkp_help_text">{translate key="plugins.generic.articleNumber.settings.deriveOnPublish.description"}</p>
+				{/fbvFormSection}
+
+				{fbvFormSection list=true label="plugins.generic.articleNumber.settings.uniqueness"}
 				{fbvElement type="radio" id="uniqueness-journal" name="workNumberUniquenessScope" value="journal" checked=$workNumberUniquenessScope|compare:"journal" label="plugins.generic.articleNumber.settings.uniqueness.journal"}
 				{fbvElement type="radio" id="uniqueness-issue" name="workNumberUniquenessScope" value="issue" checked=$workNumberUniquenessScope|compare:"issue" label="plugins.generic.articleNumber.settings.uniqueness.issue"}
 			{/fbvFormSection}

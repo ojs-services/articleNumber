@@ -73,7 +73,7 @@ enabled only after a Scan, and is confirmation-gated. The Scan lists every value
 that needs a manual check in full at the top of the result (publication ID,
 issue, article title, the *Pages* value and why), followed by the counts:
 articles in the journal (published and not), publication versions in total, and
-what will be converted. Only the current version of each article is converted. Only published and scheduled articles are converted; articles still in progress or declined are skipped and shown as such (they get their number in the Issue form before publication, or from a later Scan once published).
+what will be converted. Only the current version of each article is converted. Only published and scheduled articles are converted; articles still in progress or declined are skipped and shown as such (when an article is published, its number is filled in automatically if the *Pages* value looks like an article number; otherwise type it in the Issue form before publication).
 **Download the full result (CSV)** gives one row per article: to convert, to
 check by hand, skipped (real page range, already numbered, no pages).
 
@@ -104,6 +104,7 @@ web-request timeout. **Scan** and **Undo** in the panel are never threshold-limi
   number isn't shown twice, and the settings window says so. Turn it on or off
   yourself and your choice is kept. Affects only the plugin's on-page item, not
   export or citation.
+- **Derive the number from the pages value when an article is published** (on by default) — when an article is published or scheduled with no Article Number and its *Pages* value looks like an article number (the same rule as the Scan: for example `e0231470`), the value is copied into the field. Real page ranges and unclear values are left alone, a number typed by hand is never replaced, and *Pages* is never changed. Switch it off here to go back to typing every number yourself.
 - **Uniqueness scope** — *journal-wide* (default, recommended) requires each
   Article Number to be unique across the whole journal, matching the
   continuous-publishing / PLoS model; *per-issue* only enforces uniqueness within

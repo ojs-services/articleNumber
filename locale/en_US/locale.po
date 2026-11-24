@@ -179,7 +179,7 @@ msgid "plugins.generic.articleNumber.field.error.published"
 msgstr "This article is already published, so its Article Number cannot be changed — the published coordinate is permanent and changing it would break citation and indexing matches. To back-fill an Article Number on already-published articles, use the plugin's migration tool instead."
 
 msgid "plugins.generic.articleNumber.migrate.scan.articles"
-msgstr "%a% article(s) in this journal: %p% published, %o% in progress, scheduled or declined."
+msgstr "%a% article(s) in this journal: %p% published or scheduled, %o% in progress or declined."
 
 msgid "plugins.generic.articleNumber.migrate.scan.versions"
 msgstr "Together they have %v% publication versions. Only the current version of each article is converted; earlier versions are left as they are."
@@ -226,5 +226,11 @@ msgstr "One row per article: to convert, to check by hand, skipped and already n
 msgid "plugins.generic.articleNumber.settings.showInDetails.themeNote"
 msgstr "Your active theme already shows the Article Number itself, so this is off by default. Turn it on only if you also want the plugin's own item."
 
+msgid "plugins.generic.articleNumber.settings.deriveOnPublish"
+msgstr "Derive the number from the pages value when an article is published"
+
+msgid "plugins.generic.articleNumber.settings.deriveOnPublish.description"
+msgstr "When an article is published or scheduled without an Article Number and its Pages value looks like an article number (for example e0231470), that value is copied into the Article Number field. Real page ranges and unclear values are left alone, a number typed by hand is never replaced, and Pages is never changed."
+
 msgid "plugins.generic.articleNumber.migrate.scan.unpublished"
-msgstr "%u% article(s) were skipped because they are not published (in progress or declined). An article gets its number in the Issue form before publication, or from a later Scan once it is published."
+msgstr "%u% article(s) were skipped because they are not published (in progress or declined). When an article is published, its number is filled in automatically if its Pages value looks like an article number; otherwise type it in the Issue form before publication."

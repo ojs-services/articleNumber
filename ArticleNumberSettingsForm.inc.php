@@ -44,6 +44,8 @@ class ArticleNumberSettingsForm extends Form
         // Same inverted "hide" flag for the issue table-of-contents display.
         $hideToc = $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_HIDE_IN_TOC);
         $this->setData('showArticleNumberInToc', !$hideToc);
+        // Derive from Pages at publication: on unless the inverted flag is set.
+        $this->setData('deriveNumberOnPublish', !$this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_NO_DERIVE_ON_PUBLISH));
         $this->setData('workNumberGeneratorEnabled', (bool) $this->plugin->getSetting(
             $this->contextId, ArticleNumberPlugin::SETTING_GENERATOR
         ));
@@ -59,7 +61,7 @@ class ArticleNumberSettingsForm extends Form
 
     public function readInputData()
     {
-        $this->readUserVars(array('enableWorkNumber', 'showArticleNumberInDetails', 'showArticleNumberInToc', 'workNumberUniquenessScope', 'workNumberGeneratorEnabled', 'workNumberTemplate', 'workNumberMigrationThreshold'));
+        $this->readUserVars(array('enableWorkNumber', 'showArticleNumberInDetails', 'showArticleNumberInToc', 'deriveNumberOnPublish', 'workNumberUniquenessScope', 'workNumberGeneratorEnabled', 'workNumberTemplate', 'workNumberMigrationThreshold'));
 
         // Constrain scope to the allowed set; default to journal-wide.
         $scope = $this->getData('workNumberUniquenessScope');
@@ -109,6 +111,12 @@ class ArticleNumberSettingsForm extends Form
                 'string'
             );
         }
+        $this->plugin->updateSetting(
+            $this->contextId,
+            ArticleNumberPlugin::SETTING_NO_DERIVE_ON_PUBLISH,
+            $this->getData('deriveNumberOnPublish') ? 0 : 1,
+            'int'
+        );
         $this->plugin->updateSetting(
             $this->contextId,
             ArticleNumberPlugin::SETTING_HIDE_IN_TOC,

@@ -182,6 +182,45 @@ class ArticleNumberService
     }
 
     // ------------------------------------------------------------------ //
+    //  Derivation at publication time                                    //
+    // ------------------------------------------------------------------ //
+
+    /**
+     * The number to write when an article is published or scheduled with no
+     * Article Number: the Pages value, when it passes the same "derive" rule the
+     * Scan uses (never a real page range or an unclear value). Returns null when
+     * nothing should be written. `duplicateOf` is the publication that already
+     * uses the value (journal scope), reported but never blocking, as in Apply.
+     *
+     * @param int    $contextId
+     * @param int    $submissionId
+     * @param string $pages
+     * @return array|null {value:string, duplicateOf:int|null}
+     */
+    public function deriveOnPublish($contextId, $submissionId, $pages)
+    {
+        if (self::classifyPages($pages) !== 'derive') {
+            return null;
+        }
+        $value = trim((string) $pages);
+        return array(
+            'value' => $value,
+            'duplicateOf' => $this->findWorkNumberCollision($contextId, $value, (int) $submissionId, 'journal'),
+        );
+    }
+
+    /**
+     * Mark a publication's Article Number as derived by this plugin, so Undo can
+     * remove it (a number typed by hand never carries the marker).
+     *
+     * @param int $pubId
+     */
+    public function markDerived($pubId)
+    {
+        $this->setRawSetting(DAORegistry::getDAO('PublicationDAO'), $pubId, self::SETTING_DERIVED, '1');
+    }
+
+    // ------------------------------------------------------------------ //
     //  Migration engine                                                  //
     // ------------------------------------------------------------------ //
 
@@ -255,7 +294,7 @@ class ArticleNumberService
             // dry-run / apply
             $stats['articles']++;
             $status = (int) $submission->getData('status');
-            if ($status === 3) { // STATUS_PUBLISHED
+            if ($status === 3 || $status === 5) { // published or scheduled: converted
                 $stats['published']++;
             } else {
                 $stats['other']++;

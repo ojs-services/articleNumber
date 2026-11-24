@@ -6,6 +6,18 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 Target platform: **OJS 3.3.x** (PHP 7.4–8.1). OJS 3.4 and 3.5 have their own package (2.x).
 
+## [1.7.0.8] — 2026-11-24 — ojs3.3
+
+### Added
+- When an article is published or scheduled with no Article Number and its Pages value follows the same rule as the Scan (for example `e0231470`), the number is filled in automatically. One setting in the plugin's Settings, on by default: "Derive the number from the pages value when an article is published". Real page ranges and unclear values are left alone, a number typed by hand is never replaced, and Pages is never changed. Numbers filled in this way can be removed with Undo.
+
+### Changed
+- The Scan summary reads "N published or scheduled, M in progress or declined" (scheduled articles are converted).
+
+### Türkçe
+- Makale Numarası olmadan yayımlanan ya da zamanlanan bir makalenin Sayfalar değeri Tarama ile aynı kurala uyuyorsa (örneğin `e0231470`) numara kendiliğinden yazılır. Eklenti Ayarları'nda tek ayar, varsayılan açık: "Makale yayımlanırken numarayı sayfa değerinden türet". Gerçek sayfa aralıklarına ve belirsiz değerlere dokunulmaz, elle girilmiş numara hiçbir zaman ezilmez, Sayfalar değişmez. Böyle yazılan numaralar Geri al ile kaldırılabilir.
+- Tarama özeti "N yayımlanmış ya da zamanlanmış, M devam eden ya da reddedilmiş" der (zamanlanmışlar dönüştürülür).
+
 ## [1.7.0.7] — 2026-11-24 — ojs3.3
 
 ### Changed

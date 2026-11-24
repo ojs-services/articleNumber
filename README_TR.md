@@ -70,7 +70,7 @@ Numarası alanına kopyalayın ya da **Geri al** ile kaldırın. Uygula yalnızc
 sonra etkinleşir ve onay ister. Tarama, elle kontrol gerektiren her değeri sonucun en
 üstünde tam liste olarak gösterir (yayın no, sayı, makale başlığı, *Sayfalar* değeri ve
 nedeni); ardından sayımlar gelir: dergideki makaleler (yayımlanmış ve diğer), toplam
-yayın sürümü ve dönüştürülecekler. Yalnız her makalenin güncel sürümü dönüştürülür. Yalnız yayımlanmış ve zamanlanmış makaleler dönüştürülür; devam eden ya da reddedilen makaleler atlanır ve öyle gösterilir (numarayı yayımdan önce Sayı formunda alır ya da yayımlandıktan sonraki bir Taramada).
+yayın sürümü ve dönüştürülecekler. Yalnız her makalenin güncel sürümü dönüştürülür. Yalnız yayımlanmış ve zamanlanmış makaleler dönüştürülür; devam eden ya da reddedilen makaleler atlanır ve öyle gösterilir (makale yayımlandığında *Sayfalar* değeri bir makale numarasına benziyorsa numara kendiliğinden yazılır; değilse numarayı yayımdan önce Sayı formuna yazın).
 **Tam sonucu indir (CSV)** makale başına bir satır verir: dönüştürülecek, elle bakılacak,
 atlanan (gerçek sayfa aralığı, zaten numaralı, sayfa yok).
 
@@ -100,6 +100,7 @@ ve web isteği zaman aşımına tabi olmayan bu komuta yönlendirir. Paneldeki *
   başlar, böylece numara iki kez görünmez; ayar penceresi bunu belirtir. Siz açar ya da
   kapatırsanız seçiminiz korunur. Yalnızca eklentinin sayfadaki öğesini etkiler; dışa
   aktarımı ve atıfı etkilemez.
+- **Makale yayımlanırken numarayı sayfa değerinden türet** (varsayılan açık) — bir makale Makale Numarası olmadan yayımlandığında ya da zamanlandığında ve *Sayfalar* değeri bir makale numarasına benziyorsa (Tarama ile aynı kural: örneğin `e0231470`), değer alana kopyalanır. Gerçek sayfa aralıklarına ve belirsiz değerlere dokunulmaz, elle girilmiş numara hiçbir zaman ezilmez, *Sayfalar* değişmez. Her numarayı kendiniz yazmak için buradan kapatın.
 - **Benzersizlik kapsamı** — *tüm dergi* (varsayılan, önerilen) her Makale Numarasının
   dergi genelinde benzersiz olmasını ister (sürekli yayın / PLoS modeli); *sayı başına*
   yalnızca aynı sayı içinde benzersizlik arar (cilt/sayı içinde numaralandıran dergiler için).

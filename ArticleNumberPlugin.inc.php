@@ -70,6 +70,13 @@ class ArticleNumberPlugin extends GenericPlugin
     public const SETTING_DETAILS_CHOICE = 'articleNumberDetailsChoice';
 
     /**
+     * Per-journal: do NOT derive the number from Pages when an article is
+     * published (1 = off, unset = on). Inverted flag for the same reason as the
+     * hide flags: OJS reads a falsy stored value back as null.
+     */
+    public const SETTING_NO_DERIVE_ON_PUBLISH = 'noDeriveOnPublish';
+
+    /**
      * Themes that print the Article Number themselves, so the plugin's own item
      * in the article-details block would show it twice. This is the ONE place that
      * lists them. A theme can declare the same thing without being listed here by
@@ -156,6 +163,12 @@ class ArticleNumberPlugin extends GenericPlugin
             // runtime. The callback re-checks the per-journal opt-in and the
             // hand-off guard, so registering here unconditionally is safe.
             HookRegistry::register('Schema::get::publication', array($this, 'addWorkNumberToSchema'));
+
+            // Publishing / scheduling: when the article has no Article Number and
+            // its Pages value passes the migration's "derive" rule, write it then
+            // (setting on by default). Never replaces a number typed by hand.
+            HookRegistry::register('Publication::publish::before', array($this, 'deriveNumberOnPublish'));
+            HookRegistry::register('Publication::publish', array($this, 'markDerivedOnPublish'));
 
             // Phase 2: editor UI. Inject the "Article Number" field into the
             // publication issue-entry form, and enforce the published-coordinate
@@ -464,6 +477,68 @@ class ArticleNumberPlugin extends GenericPlugin
         }, $template);
         $out = str_replace(array('{:d}', '{n}'), (string) $n, $out);
         return $out;
+    }
+
+    /** @var array publication id => number derived at publication, awaiting the saved-check */
+    private $pendingDerived = array();
+
+    /**
+     * Hook callback for `Publication::publish` (after the save): mark the number as
+     * derived by this plugin (so Undo can remove it) only if it was really saved.
+     *
+     * @param string $hookName
+     * @param array  $args [0]=>&$newPublication
+     * @return bool false
+     */
+    public function markDerivedOnPublish($hookName, $args)
+    {
+        $pub = $args[0];
+        $id = (int) $pub->getId();
+        if (isset($this->pendingDerived[$id])) {
+            if ((string) $pub->getData(self::PROP_WORK_NUMBER) === (string) $this->pendingDerived[$id]) {
+                $this->getService()->markDerived($id);
+            }
+            unset($this->pendingDerived[$id]);
+        }
+        return false;
+    }
+
+    /**
+     * Hook callback for `Publication::publish::before`: derive the Article Number
+     * from the Pages value at publication (or scheduling) time. Does nothing when
+     * the feature or this option is off, when a number is already set, or when the
+     * Pages value is a real page range or an unclear value.
+     *
+     * @param string $hookName
+     * @param array  $args [0]=>&$newPublication, [1]=>$publication
+     * @return bool false
+     */
+    public function deriveNumberOnPublish($hookName, $args)
+    {
+        $newPublication = $args[0];
+        $submission = Services::get('submission')->get($newPublication->getData('submissionId'));
+        if (!$submission) {
+            return false;
+        }
+        $contextId = (int) $submission->getData('contextId');
+        if (!$this->isFeatureEnabled($contextId) || $this->getSetting($contextId, self::SETTING_NO_DERIVE_ON_PUBLISH)) {
+            return false;
+        }
+        $existing = $newPublication->getData(self::PROP_WORK_NUMBER);
+        if ($existing !== null && trim((string) $existing) !== '') {
+            return false; // never overwrite a number that is already there
+        }
+        $service = $this->getService();
+        $derived = $service->deriveOnPublish($contextId, (int) $submission->getId(), $newPublication->getData('pages'));
+        if ($derived === null) {
+            return false;
+        }
+        $newPublication->setData(self::PROP_WORK_NUMBER, $derived['value']);
+        $this->pendingDerived[(int) $newPublication->getId()] = $derived['value'];
+        if ($derived['duplicateOf']) {
+            error_log('articleNumber: derived "' . $derived['value'] . '" at publication for #' . $newPublication->getId() . ', also used by #' . $derived['duplicateOf']);
+        }
+        return false;
     }
 
     /**
