@@ -118,8 +118,8 @@ web-request timeout. **Scan** and **Undo** in the panel are never threshold-limi
 
 1. On an article's **Publication → Issue** tab, enter the Article Number in the
    field below *Pages*. Leave *Pages* empty — when an article number is set it
-   becomes the authoritative coordinate, and emitting both produces broken
-   metadata downstream.
+   becomes the authoritative coordinate. If both are filled, Crossref, JATS and
+   Google Scholar use the Article Number; DOAJ, PubMed and other exports use Pages.
 2. Once an article is **published**, its Article Number is locked (changing a
    deposited coordinate would break citation/indexing matches). Use the migration
    tool to back-fill published articles instead.

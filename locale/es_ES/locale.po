@@ -46,7 +46,7 @@ msgid "plugins.generic.articleNumber.field.label"
 msgstr "Número de artículo"
 
 msgid "plugins.generic.articleNumber.field.description"
-msgstr "El localizador de este artículo en la publicación digital (elocation-id), p. ej., e0231470 o P2.16. Úselo <strong>en lugar de</strong> un intervalo de páginas: cuando hay un Número de artículo, este pasa a ser la referencia válida y el campo Páginas debe quedar vacío. Use Páginas solo en los artículos que tengan un intervalo real de páginas impresas. No rellene nunca los dos: eso genera metadatos erróneos en Crossref, JATS/PMC y Google Scholar."
+msgstr "El localizador de este artículo en la publicación digital (elocation-id), p. ej., e0231470 o P2.16. Úselo <strong>en lugar de</strong> un intervalo de páginas: cuando hay un Número de artículo, este pasa a ser la referencia válida y el campo Páginas debe quedar vacío. Use Páginas solo en los artículos que tengan un intervalo real de páginas impresas. Si se rellenan los dos, Crossref, JATS y Google Scholar usan el Número de artículo; DOAJ, PubMed y otras exportaciones usan Páginas."
 
 msgid "plugins.generic.articleNumber.citation.articleLabel"
 msgstr "Artículo"
@@ -87,6 +87,9 @@ msgstr "Elija si el Número de artículo debe ser único en toda la revista (el 
 
 msgid "plugins.generic.articleNumber.uniqueness.error"
 msgstr "Este Número de artículo ya lo usa otro artículo de esta revista. Cada artículo debe tener un Número de artículo único."
+
+msgid "plugins.generic.articleNumber.uniqueness.error.issue"
+msgstr "Este Número de artículo ya lo usa otro artículo de este número. Cada artículo de un número debe tener un Número de artículo único."
 
 # In-panel migration -----------------------------------------------------
 

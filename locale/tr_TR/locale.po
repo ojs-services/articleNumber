@@ -47,7 +47,7 @@ msgid "plugins.generic.articleNumber.field.label"
 msgstr "Makale Numarası"
 
 msgid "plugins.generic.articleNumber.field.description"
-msgstr "Bu makalenin dijital-öncelikli konum tanımlayıcısı (elocation-id) — ör. e0231470 veya P2.16. Bunu sayfa aralığı <strong>yerine</strong> kullanın: bir Makale Numarası girildiğinde yetkili koordinat o olur ve Sayfalar alanını boş bırakmalısınız. Sayfalar alanını yalnızca gerçek bir basılı sayfa aralığı olan makaleler için kullanın. İkisini birden asla doldurmayın: aksi hâlde Crossref, JATS/PMC ve Google Scholar'da bozuk metadata oluşur."
+msgstr "Bu makalenin dijital-öncelikli konum tanımlayıcısı (elocation-id) — ör. e0231470 veya P2.16. Bunu sayfa aralığı <strong>yerine</strong> kullanın: bir Makale Numarası girildiğinde yetkili koordinat o olur ve Sayfalar alanını boş bırakmalısınız. Sayfalar alanını yalnızca gerçek bir basılı sayfa aralığı olan makaleler için kullanın. İkisi de doluysa Crossref, JATS ve Google Scholar Makale Numarasını kullanır; DOAJ, PubMed ve diğer dışa aktarımlar Sayfalar alanını kullanır."
 
 msgid "plugins.generic.articleNumber.citation.articleLabel"
 msgstr "Makale"
@@ -88,6 +88,9 @@ msgstr "Bir Makale Numarasının tüm dergide mi (PLoS ve benzeri dergilerin kul
 
 msgid "plugins.generic.articleNumber.uniqueness.error"
 msgstr "Bu Makale Numarası bu dergide başka bir makalede zaten kullanılıyor. Her makalenin benzersiz bir Makale Numarası olmalıdır."
+
+msgid "plugins.generic.articleNumber.uniqueness.error.issue"
+msgstr "Bu Makale Numarası bu sayıdaki başka bir makalede zaten kullanılıyor. Bir sayıdaki her makalenin benzersiz bir Makale Numarası olmalıdır."
 
 # Migration ---------------------------------------------------------
 

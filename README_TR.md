@@ -113,7 +113,7 @@ ve web isteği zaman aşımına tabi olmayan bu komuta yönlendirir. Paneldeki *
 
 1. Bir makalenin **Yayın → Sayı** sekmesinde, *Sayfalar*'ın altındaki alana Makale
    Numarasını yazın. *Sayfalar*'ı boş bırakın: makale numarası varken yetkili koordinat o
-   olur; ikisini birlikte göndermek aşağı akışta bozuk metaveri üretir.
+   olur; ikisi de doluysa Crossref, JATS ve Google Scholar Makale Numarasını kullanır; DOAJ, PubMed ve diğer dışa aktarımlar Sayfalar alanını kullanır.
 2. Makale **yayımlandıktan** sonra Makale Numarası kilitlenir (yatırılmış bir koordinatı
    değiştirmek atıf/indeks eşleşmelerini bozar). Yayımlanmış makaleleri doldurmak için göç
    aracını kullanın.

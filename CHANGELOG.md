@@ -6,6 +6,18 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 Target platform: **OJS 3.3.x** (PHP 7.4–8.1). OJS 3.4 and 3.5 have their own package (2.x).
 
+## [1.7.0.7] — 2026-11-24 — ojs3.3
+
+### Changed
+- On sites that use Atlas, Nivo, Axis or JournalPlus (or a theme that declares it) the article-page block starts off, because the theme already shows the number; anyone who wants it can turn it on.
+- The duplicate-number message follows the uniqueness setting: "in this issue" when uniqueness is per issue, "in this journal" otherwise (same as the 3.4/3.5 package).
+- The Article Number field help text and the README no longer say that filling both fields produces broken metadata. They now say what happens: if both are filled, Crossref, JATS and Google Scholar use the Article Number; DOAJ, PubMed and other exports use Pages.
+
+### Türkçe
+- Atlas, Nivo, Axis ya da JournalPlus (veya bunu bildiren bir tema) kullanan sitelerde makale sayfasındaki blok kapalı başlar, çünkü tema numarayı zaten gösterir; isteyen açabilir.
+- Yinelenen numara iletisi benzersizlik ayarını izler: sayı başına ise "bu sayıda", değilse "bu dergide" (3.4/3.5 paketiyle aynı).
+- Makale Numarası alanının yardım metni ve README artık ikisini birden doldurmanın bozuk metaveri ürettiğini söylemez; olanı söyler: ikisi de doluysa Crossref, JATS ve Google Scholar Makale Numarasını kullanır; DOAJ, PubMed ve diğer dışa aktarımlar Sayfalar alanını kullanır.
+
 ## [1.7.0.6] — 2026-11-24 — ojs3.3
 
 ### Changed

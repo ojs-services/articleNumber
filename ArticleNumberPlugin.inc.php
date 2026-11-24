@@ -1318,6 +1318,20 @@ class ArticleNumberPlugin extends GenericPlugin
     }
 
     /**
+     * Duplicate-number message that matches the journal's uniqueness scope
+     * ("in this journal" or, when uniqueness is per issue, "in this issue").
+     *
+     * @param int $contextId
+     * @return string
+     */
+    private function _uniquenessErrorMessage($contextId)
+    {
+        return ($this->getUniquenessScope($contextId) === 'issue')
+            ? __('plugins.generic.articleNumber.uniqueness.error.issue')
+            : __('plugins.generic.articleNumber.uniqueness.error');
+    }
+
+    /**
      * Single source of truth: is $value already used as a workNumber by a
      * DIFFERENT submission, within the configured scope? Exact (trimmed) string
      * match; empty value is never a collision. Excludes all publications of
@@ -1393,7 +1407,7 @@ class ArticleNumberPlugin extends GenericPlugin
         }
 
         if ($this->isWorkNumberTaken($contextId, $value, (int) $submissionId, $this->getUniquenessScope($contextId), $issueId)) {
-            $errors[self::PROP_WORK_NUMBER] = array(__('plugins.generic.articleNumber.uniqueness.error'));
+            $errors[self::PROP_WORK_NUMBER] = array($this->_uniquenessErrorMessage($contextId));
         }
         return false;
     }
@@ -1430,7 +1444,7 @@ class ArticleNumberPlugin extends GenericPlugin
 
         if ($this->isWorkNumberTaken($context->getId(), $value, (int) $submissionId, $this->getUniquenessScope($context->getId()), $issueId ?: null)) {
             if (method_exists($form, 'addError')) {
-                $form->addError(self::PROP_WORK_NUMBER, __('plugins.generic.articleNumber.uniqueness.error'));
+                $form->addError(self::PROP_WORK_NUMBER, $this->_uniquenessErrorMessage($context->getId()));
             }
             if (method_exists($form, 'addErrorField')) {
                 $form->addErrorField(self::PROP_WORK_NUMBER);

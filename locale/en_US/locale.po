@@ -47,7 +47,7 @@ msgid "plugins.generic.articleNumber.field.label"
 msgstr "Article Number"
 
 msgid "plugins.generic.articleNumber.field.description"
-msgstr "The digital-first locator for this article (elocation-id), e.g. e0231470 or P2.16. Use this <strong>instead of</strong> a page range — when an Article Number is set it becomes the authoritative coordinate, and you should leave the Pages field empty. Only use Pages for articles that have a genuine printed page range. Never fill both: doing so produces broken metadata in Crossref, JATS/PMC and Google Scholar."
+msgstr "The digital-first locator for this article (elocation-id), e.g. e0231470 or P2.16. Use this <strong>instead of</strong> a page range — when an Article Number is set it becomes the authoritative coordinate, and you should leave the Pages field empty. Only use Pages for articles that have a genuine printed page range. If both are filled, Crossref, JATS and Google Scholar use the Article Number; DOAJ, PubMed and other exports use Pages."
 
 msgid "plugins.generic.articleNumber.citation.articleLabel"
 msgstr "Article"
@@ -88,6 +88,9 @@ msgstr "Choose whether an Article Number must be unique across the entire journa
 
 msgid "plugins.generic.articleNumber.uniqueness.error"
 msgstr "This Article Number is already used by another article in this journal. Each article must have a unique Article Number."
+
+msgid "plugins.generic.articleNumber.uniqueness.error.issue"
+msgstr "This Article Number is already used by another article in this issue. Each article in an issue must have a unique Article Number."
 
 # Migration ---------------------------------------------------------
 
