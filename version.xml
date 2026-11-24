@@ -16,8 +16,8 @@
 <version>
     <application>articleNumber</application>
     <type>plugins.generic</type>
-    <release>1.7.0.4</release>
-    <date>2026-11-23</date>
+    <release>1.7.0.5</release>
+    <date>2026-11-24</date>
     <lazy-load>1</lazy-load>
     <class>ArticleNumberPlugin</class>
     <compatibility application="ojs2">

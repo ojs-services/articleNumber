@@ -79,6 +79,10 @@ class migrateArticleNumbers extends CommandLineTool {
             $res = $service->processJournal($cid, $this->mode);
             foreach ($res['counts'] as $k => $v) { $grand[$k] += $v; }
             $samples = $res['samples'];
+            if ($this->mode !== 'rollback' && !empty($res['stats']['articles'])) {
+                $st = $res['stats'];
+                echo "  {$st['articles']} article(s): {$st['published']} published, {$st['other']} in progress, scheduled or declined; {$st['versions']} publication version(s) in total (only the current version of each article is converted).\n";
+            }
 
             if (!empty($samples['derive'])) {
                 echo "  " . ($this->mode === 'rollback' ? 'Rolled back' : ($this->mode === 'apply' ? 'Derived' : 'Would derive')) . ":\n";

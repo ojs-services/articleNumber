@@ -146,6 +146,12 @@ class ArticleNumberService
             return 'realpage';
         }
 
+        // Roman-numeral page ranges of a printed front matter: "I-VIII", "II-XV".
+        // Also genuine pages, so they are skipped, not listed for review.
+        if (preg_match('/^(pp?\.?\s*)?[IVXLCDM]+\s*[-\x{2013}\x{2014}]\s*[IVXLCDM]+$/iu', $p)) {
+            return 'realpage';
+        }
+
         // Confident article-number stand-ins:
         if (preg_match('/^e\d+$/i', $p)) return 'derive';                 // e0231470
         if (preg_match('/^[A-Za-z]\d+\.\d+$/', $p)) return 'derive';      // P2.16
@@ -156,6 +162,23 @@ class ArticleNumberService
         // page, roman numerals, odd punctuation, etc.) is ambiguous → a human
         // must decide. The tool never auto-derives these.
         return 'manual';
+    }
+
+    /**
+     * Why a value classified as 'manual' needs a human decision. Returns a short
+     * code the screens translate: number | roman | text | mixed | other.
+     *
+     * @param string $pages
+     * @return string
+     */
+    public static function manualReason($pages)
+    {
+        $p = trim((string) $pages);
+        if (preg_match('/^\d+$/', $p)) return 'number';             // short bare number: maybe a real single page
+        if (preg_match('/^[IVXLCDM]+$/i', $p)) return 'roman';      // single roman numeral / letters only
+        if (!preg_match('/\d/', $p)) return 'text';                 // words such as "Editorial"
+        if (preg_match('/[A-Za-z]/', $p)) return 'mixed';           // letters + digits + punctuation: "e714-0", "e-762"
+        return 'other';
     }
 
     // ------------------------------------------------------------------ //
@@ -177,8 +200,10 @@ class ArticleNumberService
      *
      * @param int    $contextId
      * @param string $mode 'dry-run' | 'apply' | 'rollback'
-     * @return array {counts:array, samples:array, aborted:bool, abortPubId:int|null,
-     *               signature:string} — `signature` is an md5 of the full candidate
+     * @return array {counts:array, samples:array, records:array, stats:array,
+     *               aborted:bool, abortPubId:int|null, signature:string} —
+     *               `records` has one row per article (dry-run/apply only), `stats`
+     *               the article / version counts; `signature` is an md5 of the full candidate
      *               set ("pubId:value" for every derive candidate), used by the
      *               panel to detect data changes between Scan and Apply.
      */
@@ -194,6 +219,17 @@ class ArticleNumberService
         // Identity of the full candidate set (every candidate, not just sampled),
         // for the panel's "did the data change since Scan?" staleness check.
         $sigParts = array();
+        // One row per article (its current publication) for the full report / CSV.
+        $records = array();
+        $issueLabels = array();
+        $stats = array('articles' => 0, 'published' => 0, 'other' => 0, 'versions' => 0);
+        if ($mode !== 'rollback') {
+            $vr = $dao->retrieve(
+                'SELECT COUNT(*) AS c FROM publications p JOIN submissions s ON s.submission_id = p.submission_id WHERE s.context_id = ?',
+                array((int) $contextId)
+            );
+            foreach ($vr as $row) { $stats['versions'] = (int) $row->c; break; }
+        }
 
         $submissions = $submissionService->getMany(array('contextId' => $contextId));
         foreach ($submissions as $submission) {
@@ -217,13 +253,37 @@ class ArticleNumberService
             }
 
             // dry-run / apply
+            $stats['articles']++;
+            if ((int) $submission->getData('status') === 3) { // STATUS_PUBLISHED
+                $stats['published']++;
+            } else {
+                $stats['other']++;
+            }
+            $record = array(
+                'publicationId' => (int) $pubId,
+                'submissionId' => (int) $submission->getId(),
+                'status' => (int) $submission->getData('status'),
+                'issue' => $this->issueLabel($publication->getData('issueId'), $issueLabels),
+                'title' => (string) $publication->getLocalizedTitle(),
+                'pages' => (string) $pages,
+                'result' => '',
+                'reason' => '',
+                'duplicate' => false,
+                'articleNumber' => '',
+            );
+
             if ($existingWn !== null && $existingWn !== '') {
                 $counts['hasWorkNumber']++;
+                $record['result'] = 'numbered';
+                $record['articleNumber'] = $existingWn;
+                $records[] = $record;
                 continue; // idempotent: never overwrite an existing Article Number
             }
 
             $class = self::classifyPages($pages);
             $counts[$class]++;
+            $resultOf = array('derive' => 'convert', 'manual' => 'check', 'realpage' => 'skip', 'empty' => 'nopages');
+            $record['result'] = $resultOf[$class];
             if ($class === 'derive') {
                 $value = trim((string) $pages);
                 $sigParts[] = $pubId . ':' . $value; // full-candidate-set identity
@@ -231,7 +291,9 @@ class ArticleNumberService
                 // A collision with an existing workNumber elsewhere, or with a
                 // value already derived earlier in this run, is flagged.
                 $dupWith = isset($derivedSeen[$value]) ? $derivedSeen[$value] : $this->findWorkNumberCollision($contextId, $value, (int) $submission->getId(), 'journal');
+                $record['articleNumber'] = $value;
                 if ($dupWith) {
+                    $record['duplicate'] = true;
                     $counts['duplicate']++;
                     if (count($samples['duplicate']) < self::SAMPLE_LIMIT) $samples['duplicate'][] = "DUPLICATE: '$value'  #$pubId collides with #$dupWith";
                 }
@@ -245,16 +307,38 @@ class ArticleNumberService
                     // pages-immutability self-check (cheap, per record)
                     $after = $this->getRawSetting($dao, $pubId, 'pages');
                     if ($after !== null && $after !== $before) {
-                        return array('counts' => $counts, 'samples' => $samples, 'aborted' => true, 'abortPubId' => $pubId, 'signature' => md5(implode('|', $sigParts)));
+                        return array('counts' => $counts, 'samples' => $samples, 'records' => $records, 'stats' => $stats, 'aborted' => true, 'abortPubId' => $pubId, 'signature' => md5(implode('|', $sigParts)));
                     }
                     $counts['changed']++;
                 }
             } elseif ($class === 'manual') {
-                if (count($samples['manual']) < self::SAMPLE_LIMIT) $samples['manual'][] = "#$pubId  pages='" . $pages . "'";
+                // Not capped: every value that needs a human decision is listed.
+                $samples['manual'][] = "#$pubId  pages='" . $pages . "'";
+                $record['reason'] = self::manualReason($pages);
             }
+            $records[] = $record;
         }
 
-        return array('counts' => $counts, 'samples' => $samples, 'aborted' => false, 'abortPubId' => null, 'signature' => md5(implode('|', $sigParts)));
+        return array('counts' => $counts, 'samples' => $samples, 'records' => $records, 'stats' => $stats, 'aborted' => false, 'abortPubId' => null, 'signature' => md5(implode('|', $sigParts)));
+    }
+
+    /**
+     * Human-readable issue label (e.g. "Vol. 4 No. 2 (2026)") for the reports,
+     * cached per run. Empty when the publication is not assigned to an issue.
+     *
+     * @param mixed $issueId
+     * @param array $cache
+     * @return string
+     */
+    private function issueLabel($issueId, array &$cache)
+    {
+        $issueId = (int) $issueId;
+        if ($issueId <= 0) return '';
+        if (!isset($cache[$issueId])) {
+            $issue = Services::get('issue')->get($issueId);
+            $cache[$issueId] = $issue ? (string) $issue->getIssueIdentification() : '';
+        }
+        return $cache[$issueId];
     }
 
     // ------------------------------------------------------------------ //

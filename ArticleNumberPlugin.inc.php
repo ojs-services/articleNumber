@@ -60,6 +60,26 @@ class ArticleNumberPlugin extends GenericPlugin
     public const SETTING_HIDE_DETAILS_BLOCK = 'hideArticleNumberInDetails';
 
     /**
+     * Per-journal: the manager's explicit choice for the article-details block
+     * ('show' | 'hide'). Unset = the manager never chose, so the default follows
+     * the active theme (see themeShowsArticleNumber()). Strings, because OJS reads
+     * a falsy stored value back as null — a plain 0 could not be told from "unset".
+     * The legacy hide flag above is still honoured for journals that saved it
+     * before this choice existed.
+     */
+    public const SETTING_DETAILS_CHOICE = 'articleNumberDetailsChoice';
+
+    /**
+     * Themes that print the Article Number themselves, so the plugin's own item
+     * in the article-details block would show it twice. This is the ONE place that
+     * lists them. A theme can declare the same thing without being listed here by
+     * giving its theme plugin class a public method rendersArticleNumber() that
+     * returns true (see docs/THEME-INTEGRATION.md). Compared with the theme's
+     * directory name, case-insensitively, on the active theme and its parents.
+     */
+    public const THEMES_SHOWING_NUMBER = array('atlas', 'nivo', 'axis', 'journalplus');
+
+    /**
      * Per-journal: HIDE the Article Number in the issue table of contents
      * (1 = hide, unset = show). Same inverted-flag storage as
      * SETTING_HIDE_DETAILS_BLOCK (OJS reads falsy settings back as null). On by
@@ -447,6 +467,80 @@ class ArticleNumberPlugin extends GenericPlugin
     }
 
     /**
+     * Is the plugin's own item in the article-details block hidden for this
+     * journal? The manager's saved choice wins; with no choice, the legacy hide
+     * flag wins; with neither, the block is hidden only when the active theme
+     * prints the Article Number itself.
+     *
+     * @param int $contextId
+     * @return bool
+     */
+    public function isDetailsBlockHidden($contextId)
+    {
+        $choice = $this->getSetting($contextId, self::SETTING_DETAILS_CHOICE);
+        if ($choice === 'hide') {
+            return true;
+        }
+        if ($choice === 'show') {
+            return false;
+        }
+        if ($this->getSetting($contextId, self::SETTING_HIDE_DETAILS_BLOCK)) {
+            return true;
+        }
+        return $this->themeShowsArticleNumber($contextId);
+    }
+
+    /**
+     * Does the journal's active theme print the Article Number itself? True when
+     * the theme (or a parent theme) declares it through rendersArticleNumber(),
+     * or is named in THEMES_SHOWING_NUMBER.
+     *
+     * @param int $contextId
+     * @return bool
+     */
+    public function themeShowsArticleNumber($contextId)
+    {
+        static $cache = array();
+        $contextId = (int) $contextId;
+        if (isset($cache[$contextId])) {
+            return $cache[$contextId];
+        }
+        $result = false;
+        try {
+            $request = Application::get()->getRequest();
+            $context = ($request->getContext() && (int) $request->getContext()->getId() === $contextId)
+                ? $request->getContext()
+                : Application::getContextDAO()->getById($contextId);
+            $path = $context ? $context->getData('themePluginPath') : null;
+            if (!$path && $request->getSite()) {
+                $path = $request->getSite()->getData('themePluginPath');
+            }
+            if ($path && in_array(strtolower((string) $path), self::THEMES_SHOWING_NUMBER, true)) {
+                // Named in the list. Checked on the path first because the theme
+                // plugin objects are not loaded on every page (e.g. the back end).
+                return $cache[$contextId] = true;
+            }
+            // A theme that is loaded can declare it, or inherit it from a parent theme.
+            $theme = $path ? PluginRegistry::getPlugin('themes', $path) : null;
+            for ($guard = 0; $theme && $guard < 10; $guard++) {
+                if (method_exists($theme, 'rendersArticleNumber') && $theme->rendersArticleNumber()) {
+                    $result = true;
+                    break;
+                }
+                if (in_array(strtolower((string) $theme->getDirName()), self::THEMES_SHOWING_NUMBER, true)) {
+                    $result = true;
+                    break;
+                }
+                $theme = $theme->parent ?? null;
+            }
+        } catch (\Throwable $e) {
+            $result = false; // detection must never break a page
+            error_log('articleNumber: theme detection failed: ' . $e->getMessage());
+        }
+        return $cache[$contextId] = $result;
+    }
+
+    /**
      * Hook callback for `Templates::Article::Details`.
      *
      * Appends an "Article Number: X" item to the article landing page's
@@ -470,7 +564,7 @@ class ArticleNumberPlugin extends GenericPlugin
         // Per-journal opt-out: a theme that renders the Article Number itself
         // sets the truthy "hide" flag to suppress this plugin's own item and
         // avoid a duplicate. Default (unset) shows it.
-        if ($this->getSetting($context->getId(), self::SETTING_HIDE_DETAILS_BLOCK)) {
+        if ($this->isDetailsBlockHidden($context->getId())) {
             return false;
         }
 
@@ -1405,12 +1499,71 @@ class ArticleNumberPlugin extends GenericPlugin
                 }
                 return new JSONMessage(true, $form->fetch($request));
 
+            case 'migrateCsv':
             case 'migrateScan':
             case 'migrateApply':
             case 'migrateRollback':
                 return $this->handleMigrationVerb($verb, $request);
         }
         return parent::manage($args, $request);
+    }
+
+    /**
+     * Send the full scan result as a CSV download (one row per article: to convert,
+     * to check by hand, skipped, already numbered, no pages) and end the request.
+     * UTF-8 with a BOM so spreadsheets open accented text correctly; cells that
+     * could be read as a formula are neutralised.
+     *
+     * @param string $journalPath
+     * @param array  $records
+     */
+    private function _sendMigrationCsv($journalPath, $records)
+    {
+        $statusNames = array(1 => 'in progress', 3 => 'published', 4 => 'declined', 5 => 'scheduled');
+        $resultNames = array(
+            'convert' => 'to convert',
+            'check' => 'manual check',
+            'skip' => 'skipped: real page range',
+            'numbered' => 'skipped: already has an Article Number',
+            'nopages' => 'skipped: no pages value',
+        );
+        $reasonNames = array(
+            'number' => 'bare number: could be a real single page',
+            'roman' => 'roman numeral or letters only',
+            'text' => 'text, not a number',
+            'mixed' => 'letters, digits and punctuation: not a recognised pattern',
+            'other' => 'not recognised',
+        );
+        $safe = function ($v) {
+            $v = (string) $v;
+            return ($v !== '' && strpos("=+-@\t\r", $v[0]) !== false) ? "'" . $v : $v;
+        };
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="article-number-scan-' . preg_replace('/[^A-Za-z0-9_-]/', '', $journalPath) . '-' . date('Ymd') . '.csv"');
+        header('Cache-Control: no-store');
+        $out = fopen('php://output', 'w');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, array('result', 'publication_id', 'submission_id', 'submission_status', 'issue', 'title', 'pages', 'article_number', 'duplicate', 'note'));
+        foreach ($records as $r) {
+            fputcsv($out, array(
+                isset($resultNames[$r['result']]) ? $resultNames[$r['result']] : $r['result'],
+                $r['publicationId'],
+                $r['submissionId'],
+                isset($statusNames[$r['status']]) ? $statusNames[$r['status']] : ('status ' . $r['status']),
+                $safe($r['issue']),
+                $safe($r['title']),
+                $safe($r['pages']),
+                $safe($r['articleNumber']),
+                $r['duplicate'] ? 'yes' : '',
+                $r['reason'] !== '' ? (isset($reasonNames[$r['reason']]) ? $reasonNames[$r['reason']] : $r['reason']) : '',
+            ));
+        }
+        fclose($out);
+        exit;
     }
 
     /**
@@ -1479,13 +1632,42 @@ class ArticleNumberPlugin extends GenericPlugin
         $service = $this->getService();
         $threshold = $this->getMigrationThreshold($cid);
 
+        if ($verb === 'migrateCsv') {
+            $res = $service->processJournal($cid, 'dry-run');
+            $this->_sendMigrationCsv($context->getPath(), $res['records']);
+            return new JSONMessage(false); // not reached: _sendMigrationCsv() ends the request
+        }
+
         if ($verb === 'migrateScan') {
             $res = $service->processJournal($cid, 'dry-run');
             $candidateCount = (int) $res['counts']['derive'];
+            // Every value that needs a manual check is listed in full (never capped).
+            $manualRows = array();
+            foreach ($res['records'] as $rec) {
+                if ($rec['result'] === 'check') {
+                    $manualRows[] = array(
+                        'id' => $rec['publicationId'],
+                        'issue' => $rec['issue'],
+                        'title' => $rec['title'],
+                        'pages' => $rec['pages'],
+                        'reason' => $rec['reason'],
+                    );
+                }
+            }
+            // The settings window shows at most SAMPLE_LIMIT example lines per list.
+            $panelSamples = $res['samples'];
+            foreach ($panelSamples as $k => $lines) {
+                $panelSamples[$k] = array_slice($lines, 0, ArticleNumberService::SAMPLE_LIMIT);
+            }
             return new JSONMessage(true, json_encode(array(
                 'mode' => 'scan',
                 'counts' => $res['counts'],
-                'samples' => $res['samples'],
+                'stats' => $res['stats'],
+                'manual' => $manualRows,
+                'csvUrl' => $request->getRouter()->url($request, null, null, 'manage', null, array(
+                    'verb' => 'migrateCsv', 'plugin' => $this->getName(), 'category' => 'generic',
+                )),
+                'samples' => $panelSamples,
                 'candidateCount' => $candidateCount,
                 'threshold' => $threshold,
                 'applyAllowed' => ($candidateCount > 0 && $candidateCount < $threshold),

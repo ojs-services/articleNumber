@@ -36,10 +36,11 @@ class ArticleNumberSettingsForm extends Form
         $this->setData('enableWorkNumber', (bool) $this->plugin->getSetting(
             $this->contextId, ArticleNumberPlugin::SETTING_ENABLE
         ));
-        // The form shows a "Show …" checkbox; internally we store the inverse
-        // "hide" flag (truthy = hide). Default = show.
-        $hide = $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_HIDE_DETAILS_BLOCK);
-        $this->setData('showArticleNumberInDetails', !$hide);
+        // The form shows a "Show …" checkbox. What it starts as: the manager's
+        // saved choice if there is one, otherwise off when the active theme prints
+        // the Article Number itself, otherwise on.
+        $this->setData('showArticleNumberInDetails', !$this->plugin->isDetailsBlockHidden($this->contextId));
+        $this->setData('themeShowsArticleNumber', $this->plugin->themeShowsArticleNumber($this->contextId));
         // Same inverted "hide" flag for the issue table-of-contents display.
         $hideToc = $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_HIDE_IN_TOC);
         $this->setData('showArticleNumberInToc', !$hideToc);
@@ -92,14 +93,22 @@ class ArticleNumberSettingsForm extends Form
             (bool) $this->getData('enableWorkNumber'),
             'bool'
         );
-        // Store the inverse "hide" flag as a truthy int (1 = hide) so it reads
-        // back reliably; "show" stores 0 (which reads back as null = default show).
-        $this->plugin->updateSetting(
-            $this->contextId,
-            ArticleNumberPlugin::SETTING_HIDE_DETAILS_BLOCK,
-            $this->getData('showArticleNumberInDetails') ? 0 : 1,
-            'int'
-        );
+        // Remember the manager's choice for the details block only when it is a
+        // real choice: one already made earlier, or one that differs from what the
+        // journal would get by default (the theme decides the default). Saving the
+        // form without touching the checkbox keeps following the theme.
+        $wantHidden = !$this->getData('showArticleNumberInDetails');
+        $hadChoice = $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_DETAILS_CHOICE) !== null;
+        $defaultHidden = (bool) $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_HIDE_DETAILS_BLOCK)
+            || $this->plugin->themeShowsArticleNumber($this->contextId);
+        if ($hadChoice || $wantHidden !== $defaultHidden) {
+            $this->plugin->updateSetting(
+                $this->contextId,
+                ArticleNumberPlugin::SETTING_DETAILS_CHOICE,
+                $wantHidden ? 'hide' : 'show',
+                'string'
+            );
+        }
         $this->plugin->updateSetting(
             $this->contextId,
             ArticleNumberPlugin::SETTING_HIDE_IN_TOC,

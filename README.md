@@ -69,7 +69,13 @@ derived (manually entered Article Numbers are untouched).
 **From the settings panel (this journal):** in the plugin's Settings, use
 **Scan** to preview what would be converted (read-only), then **Apply** to copy
 those numbers into the Article Number field, or **Undo** to remove them. Apply is
-enabled only after a Scan, and is confirmation-gated.
+enabled only after a Scan, and is confirmation-gated. The Scan lists every value
+that needs a manual check in full at the top of the result (publication ID,
+issue, article title, the *Pages* value and why), followed by the counts:
+articles in the journal (published and not), publication versions in total, and
+what will be converted. Only the current version of each article is converted.
+**Download the full result (CSV)** gives one row per article: to convert, to
+check by hand, skipped (real page range, already numbered, no pages).
 
 **From the command line (any or all journals):**
 
@@ -92,10 +98,12 @@ web-request timeout. **Scan** and **Undo** in the panel are never threshold-limi
 ## Settings
 
 - **Enable the Article Number field** — master per-journal switch (default off).
-- **Show the Article Number in the article details block** (default on) — turn
-  off when your theme displays the Article Number itself (e.g. Nivo, Atlas, Axis)
-  so it isn't shown twice. Affects only the plugin's on-page item, not export or
-  citation.
+- **Show the Article Number in the article details block** — on by default,
+  except when the active theme displays the Article Number itself (Atlas, Nivo,
+  Axis, JournalPlus, or a theme that declares it): then it starts off, so the
+  number isn't shown twice, and the settings window says so. Turn it on or off
+  yourself and your choice is kept. Affects only the plugin's on-page item, not
+  export or citation.
 - **Uniqueness scope** — *journal-wide* (default, recommended) requires each
   Article Number to be unique across the whole journal, matching the
   continuous-publishing / PLoS model; *per-issue* only enforces uniqueness within

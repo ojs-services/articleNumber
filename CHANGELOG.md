@@ -6,6 +6,24 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 Target platform: **OJS 3.3.x** (PHP 7.4–8.1). OJS 3.4 and 3.5 have their own package (2.x).
 
+## [1.7.0.5] — 2026-11-24 — ojs3.3
+
+### Added
+- The migration Scan lists every value that needs a manual check in full, at the top of the result: publication ID, issue, article title, the *Pages* value and why it needs a check (before, only the first 25 were listed on the CLI and none in the settings window).
+- The full Scan result can be downloaded as CSV, one row per article (to convert, manual check, skipped, already numbered).
+- The Scan shows the counts of articles (published and not) and of publication versions separately, and says that only the current version of each article is converted.
+
+### Changed
+- The article-page item starts off when the active theme (Atlas, Nivo, Axis, JournalPlus, or a theme that declares `rendersArticleNumber()`) prints the number itself. A choice made in the settings window is kept.
+- Roman-numeral page ranges such as `II-XV` are treated as real page ranges and skipped, as in the 3.4/3.5 package; they are no longer listed for manual check.
+
+### Türkçe
+- Taşıma taraması, elle kontrol gerektiren her değeri sonucun en üstünde tam liste olarak gösterir: yayın no, sayı, makale başlığı, *Sayfalar* değeri ve nedeni (önceden komut satırında yalnız ilk 25, ayar penceresinde hiç gösterilmiyordu).
+- Tam tarama sonucu makale başına bir satırla CSV olarak indirilebilir (dönüştürülecek, elle kontrol, atlanan, zaten numaralı).
+- Tarama, makale (yayımlanmış ve diğer) ve yayın sürümü sayılarını ayrı gösterir ve yalnız her makalenin güncel sürümünün dönüştürüldüğünü söyler.
+- Etkin tema (Atlas, Nivo, Axis, JournalPlus ya da `rendersArticleNumber()` bildiren bir tema) numarayı kendisi basıyorsa makale sayfasındaki öğe kapalı başlar; ayar penceresinde yapılan seçim korunur.
+- `II-XV` gibi Roma rakamlı sayfa aralıkları, 3.4/3.5 paketindeki gibi gerçek sayfa aralığı sayılıp atlanır; artık elle kontrol listesine girmez.
+
 ## [1.7.0.4] — 2026-11-23 — ojs3.3
 
 ### Changed

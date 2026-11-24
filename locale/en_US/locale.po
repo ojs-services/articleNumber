@@ -174,3 +174,51 @@ msgstr "Enable the Article Number feature for this journal first."
 
 msgid "plugins.generic.articleNumber.field.error.published"
 msgstr "This article is already published, so its Article Number cannot be changed — the published coordinate is permanent and changing it would break citation and indexing matches. To back-fill an Article Number on already-published articles, use the plugin's migration tool instead."
+
+msgid "plugins.generic.articleNumber.migrate.scan.articles"
+msgstr "%a% article(s) in this journal: %p% published, %o% in progress, scheduled or declined."
+
+msgid "plugins.generic.articleNumber.migrate.scan.versions"
+msgstr "Together they have %v% publication versions. Only the current version of each article is converted; earlier versions are left as they are."
+
+msgid "plugins.generic.articleNumber.migrate.manual.title"
+msgstr "%m% value(s) need a manual check. They will NOT be converted:"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.id"
+msgstr "Publication ID"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.issue"
+msgstr "Issue"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.title"
+msgstr "Article title"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.pages"
+msgstr "Pages value"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.reason"
+msgstr "Why it needs a check"
+
+msgid "plugins.generic.articleNumber.migrate.reason.number"
+msgstr "A bare number: it could be a real single page"
+
+msgid "plugins.generic.articleNumber.migrate.reason.roman"
+msgstr "Roman numerals or letters only: it could be a front-matter page"
+
+msgid "plugins.generic.articleNumber.migrate.reason.text"
+msgstr "Text, not a number"
+
+msgid "plugins.generic.articleNumber.migrate.reason.mixed"
+msgstr "Letters, digits and punctuation in a pattern the tool does not recognise"
+
+msgid "plugins.generic.articleNumber.migrate.reason.other"
+msgstr "Not a recognised pattern"
+
+msgid "plugins.generic.articleNumber.migrate.csv"
+msgstr "Download the full result (CSV)"
+
+msgid "plugins.generic.articleNumber.migrate.csv.hint"
+msgstr "One row per article: to convert, to check by hand, skipped and already numbered."
+
+msgid "plugins.generic.articleNumber.settings.showInDetails.themeNote"
+msgstr "Your active theme already shows the Article Number itself, so this is off by default. Turn it on only if you also want the plugin's own item."

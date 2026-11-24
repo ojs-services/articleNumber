@@ -50,6 +50,9 @@
 			{/fbvFormSection}
 			{fbvFormSection}
 				<p class="pkp_help_text">{translate key="plugins.generic.articleNumber.settings.showInDetails.description"}</p>
+				{if $themeShowsArticleNumber}
+					<p class="pkp_help_text"><strong>{translate key="plugins.generic.articleNumber.settings.showInDetails.themeNote"}</strong></p>
+				{/if}
 			{/fbvFormSection}
 			{fbvFormSection list=true}
 				{fbvElement
@@ -145,6 +148,23 @@
 			rolling: "{translate key="plugins.generic.articleNumber.migrate.rolling"}",
 			summary: "{translate key="plugins.generic.articleNumber.migrate.scan.summary"}",
 			none: "{translate key="plugins.generic.articleNumber.migrate.scan.none"}",
+				articles: "{translate key="plugins.generic.articleNumber.migrate.scan.articles"}",
+				versions: "{translate key="plugins.generic.articleNumber.migrate.scan.versions"}",
+				manualTitle: "{translate key="plugins.generic.articleNumber.migrate.manual.title"}",
+				colId: "{translate key="plugins.generic.articleNumber.migrate.manual.col.id"}",
+				colIssue: "{translate key="plugins.generic.articleNumber.migrate.manual.col.issue"}",
+				colTitle: "{translate key="plugins.generic.articleNumber.migrate.manual.col.title"}",
+				colPages: "{translate key="plugins.generic.articleNumber.migrate.manual.col.pages"}",
+				colReason: "{translate key="plugins.generic.articleNumber.migrate.manual.col.reason"}",
+				reason: {ldelim}
+					number: "{translate key="plugins.generic.articleNumber.migrate.reason.number"}",
+					roman: "{translate key="plugins.generic.articleNumber.migrate.reason.roman"}",
+					text: "{translate key="plugins.generic.articleNumber.migrate.reason.text"}",
+					mixed: "{translate key="plugins.generic.articleNumber.migrate.reason.mixed"}",
+					other: "{translate key="plugins.generic.articleNumber.migrate.reason.other"}"
+				{rdelim},
+				csv: "{translate key="plugins.generic.articleNumber.migrate.csv"}",
+				csvHint: "{translate key="plugins.generic.articleNumber.migrate.csv.hint"}",
 			ready: "{translate key="plugins.generic.articleNumber.migrate.scan.ready"}",
 			locked: "{translate key="plugins.generic.articleNumber.migrate.scan.locked"}",
 			applyConfirm: "{translate key="plugins.generic.articleNumber.migrate.apply.confirm"}",
@@ -177,6 +197,30 @@
 			return out + '</ul>';
 		}
 		function setResult(h) { $result.html(h); }
+			function manualHtml(rows) {
+				if (!rows || !rows.length) return '';
+				var out = '<div class="anpManual"><strong>' + esc(fill(s.manualTitle, {m: rows.length})) + '</strong>'
+					+ '<table class="pkpTable" style="width:100%;margin:6px 0;border-collapse:collapse;white-space:normal;font-size:12px"><thead><tr>'
+					+ '<th align="left">' + esc(s.colId) + '</th><th align="left">' + esc(s.colIssue) + '</th><th align="left">' + esc(s.colTitle) + '</th><th align="left">' + esc(s.colPages) + '</th><th align="left">' + esc(s.colReason) + '</th></tr></thead><tbody>';
+				for (var i = 0; i < rows.length; i++) {
+					var r = rows[i];
+					out += '<tr><td>' + esc(r.id) + '</td><td>' + esc(r.issue) + '</td><td>' + esc(r.title) + '</td><td><code>' + esc(r.pages) + '</code></td><td>' + esc(s.reason[r.reason] || s.reason.other) + '</td></tr>';
+				}
+				return out + '</tbody></table></div>';
+			}
+			function countsHtml(p) {
+				var st = p.stats || {}, out = '';
+				if (st.articles) {
+					out += esc(fill(s.articles, {a: st.articles, p: st.published, o: st.other}));
+					if (st.versions > st.articles) out += ' ' + esc(fill(s.versions, {v: st.versions}));
+					out += '<br>';
+				}
+				return out;
+			}
+			function csvHtml(p) {
+				if (!p.csvUrl) return '';
+				return '<br><a class="pkp_button" href="' + esc(p.csvUrl) + '" target="_blank" rel="noopener">' + esc(s.csv) + '</a> <span class="pkp_help_text">' + esc(s.csvHint) + '</span>';
+			}
 		function lockApply() { lastSig = null; $apply.prop('disabled', true); }
 
 		function post(url, data, cb) {
@@ -191,23 +235,27 @@
 			setResult(esc(s.scanning));
 			lockApply();
 			post(cfg.scanUrl, {}, function(p) {
-				var c = p.counts || {};
-				var head = fill(s.summary, {d: p.candidateCount, m: c.manual || 0, r: c.realpage || 0, h: c.hasWorkNumber || 0, dup: c.duplicate || 0});
-				var body = esc(head) + samplesHtml(p.samples && p.samples.derive);
-				if (p.candidateCount === 0) {
-					setResult(esc(s.none));
-				} else if (p.applyAllowed) {
-					lastSig = p.signature; lastCount = p.candidateCount;
-					$apply.prop('disabled', false);
-					setResult(body + '<br><strong>' + esc(s.ready) + '</strong>');
-				} else {
-					lockApply();
-					setResult(body + '<br><strong>' + esc(fill(s.locked, {n: p.candidateCount, t: p.threshold})) + '</strong><br><code>' + esc(p.cliCommand) + '</code>');
-				}
+					var c = p.counts || {};
+					var head = fill(s.summary, {d: p.candidateCount, m: c.manual || 0, r: c.realpage || 0, h: c.hasWorkNumber || 0, dup: c.duplicate || 0});
+					// The values that need a person to decide come first, in full.
+					var top = manualHtml(p.manual) + countsHtml(p);
+					var body = top + esc(head) + samplesHtml(p.samples && p.samples.derive) + csvHtml(p);
+					if (p.candidateCount === 0) {
+						setResult(top + esc(s.none) + csvHtml(p));
+					} else if (p.applyAllowed) {
+						lastSig = p.signature; lastCount = p.candidateCount;
+						$apply.prop('disabled', false);
+						setResult(body + '<br><strong>' + esc(s.ready) + '</strong>');
+					} else {
+						lockApply();
+						setResult(body + '<br><strong>' + esc(fill(s.locked, {n: p.candidateCount, t: p.threshold})) + '</strong><br><code>' + esc(p.cliCommand) + '</code>');
+					}
+					// Bring the result (manual-check list first) into view.
+					try { $result[0].scrollIntoView({block: 'start'}); } catch (e) {}
+				});
 			});
-		});
 
-		$apply.click(function() {
+			$apply.click(function() {
 			if (!lastSig) return;
 			if (!window.confirm(fill(s.applyConfirm, {n: lastCount}))) return;
 			setResult(esc(s.applying));

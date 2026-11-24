@@ -67,7 +67,12 @@ dokunulmaz).
 **Ayar panelinden (bu dergi):** eklentinin Ayarlar'ında **Tara** ile nelerin
 dönüştürüleceğini önizleyin (salt okunur), ardından **Uygula** ile bu numaraları Makale
 Numarası alanına kopyalayın ya da **Geri al** ile kaldırın. Uygula yalnızca bir taramadan
-sonra etkinleşir ve onay ister.
+sonra etkinleşir ve onay ister. Tarama, elle kontrol gerektiren her değeri sonucun en
+üstünde tam liste olarak gösterir (yayın no, sayı, makale başlığı, *Sayfalar* değeri ve
+nedeni); ardından sayımlar gelir: dergideki makaleler (yayımlanmış ve diğer), toplam
+yayın sürümü ve dönüştürülecekler. Yalnız her makalenin güncel sürümü dönüştürülür.
+**Tam sonucu indir (CSV)** makale başına bir satır verir: dönüştürülecek, elle bakılacak,
+atlanan (gerçek sayfa aralığı, zaten numaralı, sayfa yok).
 
 **Komut satırından (bir ya da tüm dergiler):**
 
@@ -90,9 +95,11 @@ ve web isteği zaman aşımına tabi olmayan bu komuta yönlendirir. Paneldeki *
 ## Ayarlar
 
 - **Makale Numarası alanını etkinleştir** — dergi başına ana anahtar (varsayılan kapalı).
-- **Makale ayrıntı bloğunda göster** (varsayılan açık) — temanız Makale Numarasını
-  kendisi gösteriyorsa (ör. Nivo, Atlas, Axis) iki kez görünmesin diye kapatın. Yalnızca
-  eklentinin sayfadaki öğesini etkiler; dışa aktarımı ve atıfı etkilemez.
+- **Makale ayrıntı bloğunda göster** — varsayılan açık; etkin tema Makale Numarasını
+  kendisi gösteriyorsa (Atlas, Nivo, Axis, JournalPlus ya da bunu bildiren bir tema) kapalı
+  başlar, böylece numara iki kez görünmez; ayar penceresi bunu belirtir. Siz açar ya da
+  kapatırsanız seçiminiz korunur. Yalnızca eklentinin sayfadaki öğesini etkiler; dışa
+  aktarımı ve atıfı etkilemez.
 - **Benzersizlik kapsamı** — *tüm dergi* (varsayılan, önerilen) her Makale Numarasının
   dergi genelinde benzersiz olmasını ister (sürekli yayın / PLoS modeli); *sayı başına*
   yalnızca aynı sayı içinde benzersizlik arar (cilt/sayı içinde numaralandıran dergiler için).
