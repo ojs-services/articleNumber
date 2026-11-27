@@ -38,14 +38,15 @@ kurulumlarda, varsayılan ve özel temalarda çalışır. OMP/OPS kapsam dışı
 |---|---|
 | Editör arayüzü | Yayın sayı-girişi formunda (*Sayfalar*'dan sonra) kullanım yönergeli "Makale Numarası" alanı; yayımlanmış koordinatın değiştirilmesi engellenir. |
 | Quick Submit | Aynı alan Quick Submit içe aktarma formunda da vardır. |
-| Benzersizlik | Aynı Makale Numarası bir dergide iki makaleye verilemez; yayımlanmamış makalede kayıtta engellenir. Kapsam dergi ayarıdır (varsayılan tüm dergi; isteğe bağlı sayı başına). |
+| Benzersizlik | Aynı Makale Numarası bir dergide iki makaleye verilemez; yayımlanmamış makalede kayıtta engellenir; eklentinin kendisi de kullanılan bir numarayı yazmaz (yayımda da göçte de). Kapsam dergi ayarıdır (varsayılan tüm dergi; isteğe bağlı sayı başına). |
 | Okur sayfası | Makale sayfasında "Makale Numarası: X" gösterir (temadan bağımsız); tema kendisi gösteriyorsa dergi bazında gizlenebilir. |
 | Google Scholar | Makale numarası varsa `citation_firstpage` numarayı taşır (PLOS'un yaptığı gibi) ve `citation_lastpage` gönderilmez; *Sayfalar*'dan üretilen sahte ilk = son sayfa çifti gönderilmez. |
 | Crossref | `<publisher_item><item_number item_number_type="article_number">` ekler ve `<pages>`'i çıkarır; XSD'ye uygundur; çatal yok. |
 | JATS | `<fpage>/<lpage>` yerine `<elocation-id>` yazar (JATS4R uyumlu). |
 | Atıf | Paketle gelen CSL stillerinde stile duyarlı eşleme (ör. APA "Article e298"); bkz. *Bilinen davranışlar ve sınırlar*. |
 | Göç | Sayfa alanına gömülü numaralardan `workNumber` doldurur: ayar panelinden (bu dergi) ya da komut satırı aracıyla (bir/tüm dergiler). Yalnızca türetir; `pages` asla yazılmaz. |
-| Üreteç | İsteğe bağlı, dergi başına, varsayılan kapalı: sıradaki numarayı önerir. |
+| Üreteç | İsteğe bağlı, dergi başına, varsayılan kapalı: kullanımda olmayan sıradaki numarayı önerir. |
+| Diller | İngilizce, Türkçe, İspanyolca. Başka bir arayüz dilinde eklenti metinleri İngilizce görünür. |
 
 ## Durum
 
@@ -70,7 +71,7 @@ Numarası alanına kopyalayın ya da **Geri al** ile kaldırın. Uygula yalnızc
 sonra etkinleşir ve onay ister. Tarama, elle kontrol gerektiren her değeri sonucun en
 üstünde tam liste olarak gösterir (yayın no, sayı, makale başlığı, *Sayfalar* değeri ve
 nedeni); ardından sayımlar gelir: dergideki makaleler (yayımlanmış ve diğer), toplam
-yayın sürümü ve dönüştürülecekler. Yalnız her makalenin güncel sürümü dönüştürülür. Yalnız yayımlanmış ve zamanlanmış makaleler dönüştürülür; devam eden ya da reddedilen makaleler atlanır ve öyle gösterilir (makale yayımlandığında *Sayfalar* değeri bir makale numarasına benziyorsa numara kendiliğinden yazılır; değilse numarayı yayımdan önce Sayı formuna yazın).
+yayın sürümü ve dönüştürülecekler. Yalnız her makalenin güncel sürümü dönüştürülür. Yalnız yayımlanmış ve zamanlanmış makaleler dönüştürülür; devam eden ya da reddedilen makaleler atlanır ve öyle gösterilir (makale yayımlandığında *Sayfalar* değeri başka makalenin kullanmadığı bir makale numarasına benziyorsa numara kendiliğinden yazılır; değilse numarayı yayımdan önce Sayı formuna yazın).
 **Tam sonucu indir (CSV)** makale başına bir satır verir: dönüştürülecek, elle bakılacak,
 atlanan (gerçek sayfa aralığı, zaten numaralı, sayfa yok).
 
@@ -100,7 +101,7 @@ ve web isteği zaman aşımına tabi olmayan bu komuta yönlendirir. Paneldeki *
   başlar, böylece numara iki kez görünmez; ayar penceresi bunu belirtir. Siz açar ya da
   kapatırsanız seçiminiz korunur. Yalnızca eklentinin sayfadaki öğesini etkiler; dışa
   aktarımı ve atıfı etkilemez.
-- **Makale yayımlanırken numarayı sayfa değerinden türet** (varsayılan açık) — bir makale Makale Numarası olmadan yayımlandığında ya da zamanlandığında ve *Sayfalar* değeri bir makale numarasına benziyorsa (Tarama ile aynı kural: örneğin `e0231470`), değer alana kopyalanır. Gerçek sayfa aralıklarına ve belirsiz değerlere dokunulmaz, elle girilmiş numara hiçbir zaman ezilmez, *Sayfalar* değişmez. Her numarayı kendiniz yazmak için buradan kapatın.
+- **Makale yayımlanırken numarayı sayfa değerinden türet** (varsayılan açık) — bir makale Makale Numarası olmadan yayımlandığında ya da zamanlandığında ve *Sayfalar* değeri bir makale numarasına benziyorsa (Tarama ile aynı kural: örneğin `e0231470`), değer alana kopyalanır. Gerçek sayfa aralıklarına ve belirsiz değerlere dokunulmaz, elle girilmiş numara hiçbir zaman ezilmez, *Sayfalar* değişmez. Başka bir makalenin kullandığı numara (aşağıdaki benzersizlik kapsamına göre) **yazılmaz**: yayımlamadan önce yayım penceresinde ve *Makale Numarası* alanının altında uyarı çıkar, yayımlayan kişinin açtığı bir sonraki sayfada bir bildirim de görünür (yayım ekranının kendisinde değil), Tarama makaleyi elle kontrol listesine alır. Tarama ve göç de aynı kurala uyar; iki makaleye aynı numara düşecekse hiçbirine yazılmaz. Yayımlama engellenmez. Her numarayı kendiniz yazmak için buradan kapatın.
 - **Benzersizlik kapsamı** — *tüm dergi* (varsayılan, önerilen) her Makale Numarasının
   dergi genelinde benzersiz olmasını ister (sürekli yayın / PLoS modeli); *sayı başına*
   yalnızca aynı sayı içinde benzersizlik arar (cilt/sayı içinde numaralandıran dergiler için).

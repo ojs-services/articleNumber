@@ -39,14 +39,15 @@ scope. OJS 3.4 and 3.5 have their own package (2.x).
 |---|---|
 | Editor UI | "Article Number" field on the publication issue-entry form (after *Pages*), with usage guidance; published-coordinate changes are blocked. |
 | Quick Submit | The same field is available in the Quick Submit import form. |
-| Uniqueness | The same Article Number cannot be assigned to two articles in one journal; on an unpublished article this is blocked at save. Scope is a per-journal setting (journal-wide by default; per-issue optional). |
+| Uniqueness | The same Article Number cannot be assigned to two articles in one journal; on an unpublished article this is blocked at save, and the plugin itself never writes a used number (at publication or in the migration). Scope is a per-journal setting (journal-wide by default; per-issue optional). |
 | Reader page | Shows "Article Number: X" on the article landing page (theme-independent); can be hidden per journal when the theme renders it itself. |
 | Google Scholar | When an article number is set, `citation_firstpage` carries the number (as PLOS does) and no `citation_lastpage` is sent; the fake first = last page pair made from *Pages* is not sent. Nothing is added on version URLs (`article/view/ID/version/N`), where OJS core adds no Scholar tags either. |
 | Crossref | Injects `<publisher_item><item_number item_number_type="article_number">` and drops `<pages>`; XSD-valid; no fork. |
 | JATS | Replaces `<fpage>/<lpage>` with `<elocation-id>` (JATS4R-safe). |
 | Citation | Style-aware mapping across the bundled CSL styles (e.g. APA "Article e298"); see *Known behavior & limitations*. |
 | Migration | Back-fill `workNumber` from page-embedded numbers — from the settings panel (this journal) or the CLI tool (any/all journals). Derive only; `pages` is never written. |
-| Generator | Optional, per-journal, default-off: suggests the next sequential number. |
+| Generator | Optional, per-journal, default-off: suggests the next sequential number that is not in use. |
+| Languages | English, Turkish, Spanish. In any other interface language the plugin's texts appear in English. |
 
 ## Status
 
@@ -73,7 +74,7 @@ enabled only after a Scan, and is confirmation-gated. The Scan lists every value
 that needs a manual check in full at the top of the result (publication ID,
 issue, article title, the *Pages* value and why), followed by the counts:
 articles in the journal (published and not), publication versions in total, and
-what will be converted. Only the current version of each article is converted. Only published and scheduled articles are converted; articles still in progress or declined are skipped and shown as such (when an article is published, its number is filled in automatically if the *Pages* value looks like an article number; otherwise type it in the Issue form before publication).
+what will be converted. Only the current version of each article is converted. Only published and scheduled articles are converted; articles still in progress or declined are skipped and shown as such (when an article is published, its number is filled in automatically if the *Pages* value looks like an article number that no other article uses; otherwise type it in the Issue form before publication).
 **Download the full result (CSV)** gives one row per article: to convert, to
 check by hand, skipped (real page range, already numbered, no pages).
 
@@ -104,7 +105,7 @@ web-request timeout. **Scan** and **Undo** in the panel are never threshold-limi
   number isn't shown twice, and the settings window says so. Turn it on or off
   yourself and your choice is kept. Affects only the plugin's on-page item, not
   export or citation.
-- **Derive the number from the pages value when an article is published** (on by default) — when an article is published or scheduled with no Article Number and its *Pages* value looks like an article number (the same rule as the Scan: for example `e0231470`), the value is copied into the field. Real page ranges and unclear values are left alone, a number typed by hand is never replaced, and *Pages* is never changed. Switch it off here to go back to typing every number yourself.
+- **Derive the number from the pages value when an article is published** (on by default) — when an article is published or scheduled with no Article Number and its *Pages* value looks like an article number (the same rule as the Scan: for example `e0231470`), the value is copied into the field. Real page ranges and unclear values are left alone, a number typed by hand is never replaced, and *Pages* is never changed. A number that another article already uses (within the uniqueness scope below) is **not** written: a warning appears in the publish window before you publish and under the *Article Number* field, a notice also appears on the next page the person publishing opens (not on the publish screen itself), and the Scan lists the article for a manual check. The Scan and the migration follow the same rule, also when two articles would get the same number: neither is written. Publishing itself is not blocked. Switch it off here to go back to typing every number yourself.
 - **Uniqueness scope** — *journal-wide* (default, recommended) requires each
   Article Number to be unique across the whole journal, matching the
   continuous-publishing / PLoS model; *per-issue* only enforces uniqueness within

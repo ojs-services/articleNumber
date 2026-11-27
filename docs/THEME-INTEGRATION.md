@@ -82,17 +82,24 @@ plugin's own item off so it isn't shown twice:
 **Settings → Website → Plugins → Article Number Plugin → Settings →**
 uncheck **"Show the Article Number in the article details block"**.
 
-The details-block item starts **off** by default when the active theme is
-Atlas, Nivo, Axis or JournalPlus. Any other theme can ask for the same by giving
-its theme plugin class a public method:
+Whether the details-block item starts on or off is decided in this order:
 
-```php
-public function rendersArticleNumber() { return true; }
-```
+1. **The journal manager's own choice** in the settings window, once made.
+2. **The theme's answer.** If the active theme (or a parent theme) has this
+   public method on its theme plugin class, it is believed, yes or no:
 
-A journal manager who turns the item on (or off) in the settings window keeps
-that choice. The list of theme names lives in one place,
-`ArticleNumberPlugin::THEMES_SHOWING_NUMBER`; parent themes are checked too.
+   ```php
+   public function rendersArticleNumber() { return true; }
+   ```
+
+   `true`: the theme prints the number, so the item starts off. `false`: it does
+   not, so the item starts on, even for a theme named in the list below. Return
+   `false` whenever the theme is not going to print the number, for example when
+   it falls back to the default design. The method must not rely on the theme
+   having been initialised: the settings window calls it in the back end.
+3. **The built-in list**, for themes without the method: Atlas, Nivo, Axis and
+   JournalPlus start with the item off
+   (`ArticleNumberPlugin::THEMES_SHOWING_NUMBER`; parent themes are checked too).
 
 This per-journal setting hides only the plugin's on-page item; export, citation,
 and the Google Scholar fix are unaffected. Do this for every journal whose

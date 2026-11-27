@@ -4,9 +4,9 @@
  *
  * Article Number Plugin for OJS — per-journal settings form.
  *
- * Phase 1 persists a single per-journal setting:
- *   - enableWorkNumber (bool) — master opt-in for the Article Number feature.
- *     Default OFF. When OFF, the plugin injects nothing and OJS is unchanged.
+ * The master setting is `enableWorkNumber` (bool): the opt-in for the Article
+ * Number feature. Default OFF. When OFF, the plugin injects nothing and OJS is
+ * unchanged.
  */
 
 import('lib.pkp.classes.form.Form');

@@ -69,9 +69,6 @@ msgstr "Önerilen numara için desen. Sıfır-dolgulu sayaç için {:04d} kullan
 msgid "plugins.generic.articleNumber.generator.suggested"
 msgstr "Önerilen sıradaki Makale Numarası: <strong>{$number}</strong> — kullanmak için yukarıdaki alana yazın."
 
-msgid "plugins.generic.articleNumber.generator.collision"
-msgstr "Uyarı: bu Makale Numarası, bu sayıdaki başka bir makale tarafından zaten kullanılıyor."
-
 # Uniqueness --------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.settings.uniqueness"
@@ -230,7 +227,23 @@ msgid "plugins.generic.articleNumber.settings.deriveOnPublish"
 msgstr "Makale yayımlanırken numarayı sayfa değerinden türet"
 
 msgid "plugins.generic.articleNumber.settings.deriveOnPublish.description"
-msgstr "Bir makale Makale Numarası olmadan yayımlandığında ya da zamanlandığında ve Sayfalar değeri bir makale numarasına benziyorsa (örneğin e0231470), bu değer Makale Numarası alanına kopyalanır. Gerçek sayfa aralıklarına ve belirsiz değerlere dokunulmaz, elle girilmiş numara hiçbir zaman ezilmez ve Sayfalar alanı değişmez."
+msgstr "Bir makale Makale Numarası olmadan yayımlandığında ya da zamanlandığında ve Sayfalar değeri bir makale numarasına benziyorsa (örneğin e0231470), bu değer Makale Numarası alanına kopyalanır. Gerçek sayfa aralıklarına ve belirsiz değerlere dokunulmaz, elle girilmiş numara hiçbir zaman ezilmez ve Sayfalar alanı değişmez. Başka bir makalenin kullandığı numara yazılmaz: yayım penceresinde ve Makale Numarası alanının altında uyarılırsınız, Tarama da onu elle kontrol listesine alır."
 
 msgid "plugins.generic.articleNumber.migrate.scan.unpublished"
-msgstr "%u% makale yayımlanmamış (devam eden ya da reddedilmiş) olduğu için atlandı. Makale yayımlandığında Sayfalar değeri bir makale numarasına benziyorsa numara kendiliğinden yazılır; değilse numarayı yayımdan önce Sayı formuna yazın."
+msgstr "%u% makale yayımlanmamış (devam eden ya da reddedilmiş) olduğu için atlandı. Makale yayımlandığında Sayfalar değeri başka makalenin kullanmadığı bir makale numarasına benziyorsa numara kendiliğinden yazılır; değilse numarayı yayımdan önce Sayı formuna yazın."
+
+# A number another article already uses is never written ------------
+msgid "plugins.generic.articleNumber.duplicate.publishForm"
+msgstr "Makale Numarası yazılmayacak: Sayfalar alanındaki “{$value}” değerini #{$otherId} numaralı gönderi zaten kullanıyor. Yine de yayımlayabilirsiniz. Bu makaleye numara vermek için bu pencereyi kapatın, farklı bir Makale Numarası yazın, ardından yayımlayın."
+
+msgid "plugins.generic.articleNumber.duplicate.notice"
+msgstr "#{$submissionId} numaralı gönderiye Makale Numarası yazılmadı: Sayfalar alanındaki “{$value}” değerini #{$otherId} numaralı gönderi zaten kullanıyor. Farklı bir numara vermek için makalenin yayımını ya da zamanlamasını geri alın, numarayı Makale Numarası alanına yazın ve yeniden yayımlayın."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldPending"
+msgstr "Sayfalar alanındaki “{$value}” değerini #{$otherId} numaralı gönderi zaten kullanıyor; bu yüzden yayımda buraya kopyalanmayacak. Farklı bir Makale Numarası yazın ya da alanı boş bırakın."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldSkipped"
+msgstr "Yayımda Makale Numarası yazılmadı: Sayfalar alanındaki “{$value}” değerini #{$otherId} numaralı gönderi zaten kullanıyor. Farklı bir numara vermek için makalenin yayımını geri alın, numarayı buraya yazın ve yeniden yayımlayın."
+
+msgid "plugins.generic.articleNumber.migrate.reason.duplicate"
+msgstr "#%id% numaralı gönderiyle aynı numara: iki kez yazılmaz"

@@ -6,6 +6,30 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 Target platform: **OJS 3.3.x** (PHP 7.4–8.1). OJS 3.4 and 3.5 have their own package (2.x).
 
+## [1.7.0.9] — 2026-11-27 — ojs3.3
+
+### Changed
+- A number that another article already uses is no longer written, at publication or by the migration (within the uniqueness setting). Before, it was written and only reported. Now the field stays empty, a warning shows in the publish window and under the Article Number field (a notice also appears on the next page the person publishing opens; publishing itself is not blocked), and the Scan lists the article for a manual check with the other submission's number. When two articles would get the same number, neither is written.
+- A theme that answers for itself through `rendersArticleNumber()` is believed, yes or no, before the built-in list of themes that print the number.
+- In an interface language the plugin has no translation for, its texts appear in English instead of `##key##` codes.
+
+### Fixed
+- The warning under the field said "in this issue" even when uniqueness covers the whole journal; it now follows the setting.
+- The number generator no longer suggests a number that is already in use.
+- The command-line migration now follows each journal's uniqueness setting.
+- The active theme (and its parent) is now found by its folder, so a theme that declares it shows the number is really asked; before, only the built-in list of theme names took effect.
+- On narrow screens the Scan table scrolls inside its own box instead of widening the settings window.
+
+### Türkçe
+- Başka bir makalenin kullandığı numara artık yayımda da göçte de yazılmaz (benzersizlik ayarına göre). Eskiden yazılıyor, yalnız bildiriliyordu. Şimdi alan boş kalır, yayım penceresinde ve Makale Numarası alanının altında uyarı çıkar (yayımlayan kişinin açtığı bir sonraki sayfada bildirim de görünür; yayımlama engellenmez), Tarama makaleyi öbür gönderinin numarasıyla elle kontrol listesine alır. İki makaleye aynı numara düşecekse hiçbirine yazılmaz.
+- `rendersArticleNumber()` ile yanıtını kendisi veren temaya, evet de hayır da dese, yerleşik tema listesinden önce uyulur.
+- Eklentinin çevirisi olmayan bir arayüz dilinde metinleri `##anahtar##` kodları yerine İngilizce görünür.
+- Alanın altındaki uyarı, benzersizlik tüm dergi için olsa bile "bu sayıda" diyordu; artık ayarı izler.
+- Numara üreteci artık kullanımdaki bir numarayı önermez.
+- Komut satırı göçü artık her derginin benzersizlik ayarına uyar.
+- Etkin tema (ve üst teması) artık klasöründen bulunuyor; numarayı gösterdiğini bildiren tema gerçekten soruluyor. Eskiden yalnız yerleşik tema adı listesi işe yarıyordu.
+- Dar ekranlarda Tarama tablosu ayar penceresini genişletmek yerine kendi kutusunda kaydırılır.
+
 ## [1.7.0.8] — 2026-11-24 — ojs3.3
 
 ### Added

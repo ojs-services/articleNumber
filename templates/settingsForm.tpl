@@ -175,7 +175,8 @@
 					roman: "{translate key="plugins.generic.articleNumber.migrate.reason.roman"}",
 					text: "{translate key="plugins.generic.articleNumber.migrate.reason.text"}",
 					mixed: "{translate key="plugins.generic.articleNumber.migrate.reason.mixed"}",
-					other: "{translate key="plugins.generic.articleNumber.migrate.reason.other"}"
+					other: "{translate key="plugins.generic.articleNumber.migrate.reason.other"}",
+					duplicate: "{translate key="plugins.generic.articleNumber.migrate.reason.duplicate"}"
 				{rdelim},
 				csv: "{translate key="plugins.generic.articleNumber.migrate.csv"}",
 				csvHint: "{translate key="plugins.generic.articleNumber.migrate.csv.hint"}",
@@ -214,13 +215,13 @@
 			function manualHtml(rows) {
 				if (!rows || !rows.length) return '';
 				var out = '<div class="anpManual"><strong>' + esc(fill(s.manualTitle, {m: rows.length})) + '</strong>'
-					+ '<table class="pkpTable" style="width:100%;margin:6px 0;border-collapse:collapse;white-space:normal;font-size:12px"><thead><tr>'
+					+ '<div style="overflow-x:auto;max-width:100%"><table class="pkpTable" style="width:100%;margin:6px 0;border-collapse:collapse;white-space:normal;font-size:12px"><thead><tr>'
 					+ '<th align="left">' + esc(s.colId) + '</th><th align="left">' + esc(s.colIssue) + '</th><th align="left">' + esc(s.colTitle) + '</th><th align="left">' + esc(s.colPages) + '</th><th align="left">' + esc(s.colReason) + '</th></tr></thead><tbody>';
 				for (var i = 0; i < rows.length; i++) {
 					var r = rows[i];
-					out += '<tr><td>' + esc(r.id) + '</td><td>' + esc(r.issue) + '</td><td>' + esc(r.title) + '</td><td><code>' + esc(r.pages) + '</code></td><td>' + esc(s.reason[r.reason] || s.reason.other) + '</td></tr>';
+					out += '<tr><td>' + esc(r.id) + '</td><td>' + esc(r.issue) + '</td><td>' + esc(r.title) + '</td><td><code>' + esc(r.pages) + '</code></td><td>' + esc(fill(s.reason[r.reason] || s.reason.other, {id: r.other || ''})) + '</td></tr>';
 				}
-				return out + '</tbody></table></div>';
+				return out + '</tbody></table></div></div>';
 			}
 			function countsHtml(p) {
 				var st = p.stats || {}, out = '';

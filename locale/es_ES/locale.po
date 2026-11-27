@@ -68,9 +68,6 @@ msgstr "Patrón del número sugerido. Use {:04d} para un contador con ceros a la
 msgid "plugins.generic.articleNumber.generator.suggested"
 msgstr "Siguiente Número de artículo sugerido: <strong>{$number}</strong>. Escríbalo en el campo de arriba para usarlo."
 
-msgid "plugins.generic.articleNumber.generator.collision"
-msgstr "Aviso: este Número de artículo ya lo usa otro artículo de este número."
-
 # Uniqueness -------------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.settings.uniqueness"
@@ -229,7 +226,23 @@ msgid "plugins.generic.articleNumber.settings.deriveOnPublish"
 msgstr "Derivar el número del valor de Páginas al publicar un artículo"
 
 msgid "plugins.generic.articleNumber.settings.deriveOnPublish.description"
-msgstr "Cuando un artículo se publica o se programa sin Número de artículo y su valor de Páginas parece un número de artículo (por ejemplo, e0231470), ese valor se copia al campo Número de artículo. Los intervalos reales de páginas y los valores poco claros no se tocan, un número escrito a mano nunca se sustituye y Páginas nunca se modifica."
+msgstr "Cuando un artículo se publica o se programa sin Número de artículo y su valor de Páginas parece un número de artículo (por ejemplo, e0231470), ese valor se copia al campo Número de artículo. Los intervalos reales de páginas y los valores poco claros no se tocan, un número escrito a mano nunca se sustituye y Páginas nunca se modifica. No se escribe un número que ya use otro artículo: se le avisa en la ventana de publicación y debajo del campo Número de artículo, y el Análisis lo incluye en la lista de revisión manual."
 
 msgid "plugins.generic.articleNumber.migrate.scan.unpublished"
-msgstr "%u% artículo(s) se omitieron porque no están publicados (en curso o rechazados). Cuando un artículo se publica, su número se rellena automáticamente si su valor de Páginas parece un número de artículo; si no, escríbalo en el formulario del número antes de publicar."
+msgstr "%u% artículo(s) se omitieron porque no están publicados (en curso o rechazados). Cuando un artículo se publica, su número se rellena automáticamente si su valor de Páginas parece un número de artículo que ningún otro artículo usa; si no, escríbalo en el formulario del número antes de publicar."
+
+# A number another article already uses is never written ------------
+msgid "plugins.generic.articleNumber.duplicate.publishForm"
+msgstr "No se escribirá ningún Número de artículo: el valor de Páginas «{$value}» ya lo usa el envío #{$otherId}. Puede publicar de todos modos. Para dar un número a este artículo, cierre esta ventana, escriba un Número de artículo distinto y después publique."
+
+msgid "plugins.generic.articleNumber.duplicate.notice"
+msgstr "No se escribió ningún Número de artículo en el envío #{$submissionId}: el valor de Páginas «{$value}» ya lo usa el envío #{$otherId}. Para añadir un número distinto, retire la publicación o la programación del artículo, escríbalo en el campo Número de artículo y vuelva a publicar."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldPending"
+msgstr "El valor de Páginas «{$value}» ya lo usa el envío #{$otherId}, así que no se copiará aquí al publicar. Escriba un Número de artículo distinto o deje el campo vacío."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldSkipped"
+msgstr "Al publicar no se escribió ningún Número de artículo: el valor de Páginas «{$value}» ya lo usa el envío #{$otherId}. Para añadir un número distinto, retire la publicación del artículo, escríbalo aquí y vuelva a publicar."
+
+msgid "plugins.generic.articleNumber.migrate.reason.duplicate"
+msgstr "Mismo número que el envío #%id%: no se escribe dos veces"

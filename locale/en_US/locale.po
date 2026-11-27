@@ -69,9 +69,6 @@ msgstr "Pattern for the suggested number. Use {:04d} for a zero-padded counter (
 msgid "plugins.generic.articleNumber.generator.suggested"
 msgstr "Suggested next Article Number: <strong>{$number}</strong> — type it into the field above to use it."
 
-msgid "plugins.generic.articleNumber.generator.collision"
-msgstr "Warning: this Article Number is already used by another article in this issue."
-
 # Uniqueness --------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.settings.uniqueness"
@@ -230,7 +227,23 @@ msgid "plugins.generic.articleNumber.settings.deriveOnPublish"
 msgstr "Derive the number from the pages value when an article is published"
 
 msgid "plugins.generic.articleNumber.settings.deriveOnPublish.description"
-msgstr "When an article is published or scheduled without an Article Number and its Pages value looks like an article number (for example e0231470), that value is copied into the Article Number field. Real page ranges and unclear values are left alone, a number typed by hand is never replaced, and Pages is never changed."
+msgstr "When an article is published or scheduled without an Article Number and its Pages value looks like an article number (for example e0231470), that value is copied into the Article Number field. Real page ranges and unclear values are left alone, a number typed by hand is never replaced, and Pages is never changed. A number that another article already uses is not written: you are warned in the publish window and under the Article Number field, and Scan lists it for a manual check."
 
 msgid "plugins.generic.articleNumber.migrate.scan.unpublished"
-msgstr "%u% article(s) were skipped because they are not published (in progress or declined). When an article is published, its number is filled in automatically if its Pages value looks like an article number; otherwise type it in the Issue form before publication."
+msgstr "%u% article(s) were skipped because they are not published (in progress or declined). When an article is published, its number is filled in automatically if its Pages value looks like an article number that no other article uses; otherwise type it in the Issue form before publication."
+
+# A number another article already uses is never written ------------
+msgid "plugins.generic.articleNumber.duplicate.publishForm"
+msgstr "No Article Number will be written: the Pages value “{$value}” is already used by submission #{$otherId}. You can still publish. To give this article a number, close this window, type a different Article Number, then publish."
+
+msgid "plugins.generic.articleNumber.duplicate.notice"
+msgstr "No Article Number was written to submission #{$submissionId}: the Pages value “{$value}” is already used by submission #{$otherId}. To add a different number, unpublish or unschedule the article, type it in the Article Number field and publish again."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldPending"
+msgstr "The Pages value “{$value}” is already used by submission #{$otherId}, so it will not be copied here at publication. Type a different Article Number, or leave this empty."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldSkipped"
+msgstr "No Article Number was written at publication: the Pages value “{$value}” is already used by submission #{$otherId}. To add a different number, unpublish the article, type it here and publish again."
+
+msgid "plugins.generic.articleNumber.migrate.reason.duplicate"
+msgstr "Same number as submission #%id%: it is not written twice"

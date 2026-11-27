@@ -50,8 +50,8 @@ class ArticleNumberService
 
     /**
      * Resolve the per-journal uniqueness scope ('journal' default, or 'issue').
-     * Falls back to 'journal' when no plugin is available (e.g. CLI), which the
-     * migration engine never relies on.
+     * Falls back to 'journal' when no plugin is available. The migration engine
+     * uses it, so every caller (settings panel and CLI) passes the plugin.
      *
      * @param int $contextId
      * @return string
@@ -83,8 +83,8 @@ class ArticleNumberService
 
     /**
      * Like isWorkNumberTaken(), but returns the colliding publication id (or null).
-     * Used both for the boolean uniqueness gate and for the migration tool's
-     * duplicate REPORTING. Journal scope is the default the migration engine uses.
+     * Used by the uniqueness gate, publish-time derivation and the migration
+     * engine.
      *
      * @return int|null
      */
@@ -189,15 +189,17 @@ class ArticleNumberService
      * The number to write when an article is published or scheduled with no
      * Article Number: the Pages value, when it passes the same "derive" rule the
      * Scan uses (never a real page range or an unclear value). Returns null when
-     * nothing should be written. `duplicateOf` is the publication that already
-     * uses the value (journal scope), reported but never blocking, as in Apply.
+     * the Pages value is not an article number. `duplicateOf` is the publication
+     * that already uses the value within the journal's uniqueness scope; the
+     * caller must NOT write the value when it is set.
      *
      * @param int    $contextId
      * @param int    $submissionId
      * @param string $pages
+     * @param mixed  $issueId used when uniqueness is per issue
      * @return array|null {value:string, duplicateOf:int|null}
      */
-    public function deriveOnPublish($contextId, $submissionId, $pages)
+    public function deriveOnPublish($contextId, $submissionId, $pages, $issueId = null)
     {
         if (self::classifyPages($pages) !== 'derive') {
             return null;
@@ -205,8 +207,24 @@ class ArticleNumberService
         $value = trim((string) $pages);
         return array(
             'value' => $value,
-            'duplicateOf' => $this->findWorkNumberCollision($contextId, $value, (int) $submissionId, 'journal'),
+            'duplicateOf' => $this->findWorkNumberCollision($contextId, $value, (int) $submissionId, $this->getUniquenessScope($contextId), $issueId),
         );
+    }
+
+    /**
+     * Submission id of a publication (the number editors see in OJS lists).
+     *
+     * @param int $pubId
+     * @return int
+     */
+    public function submissionIdOf($pubId)
+    {
+        $result = DAORegistry::getDAO('PublicationDAO')->retrieve(
+            'SELECT submission_id FROM publications WHERE publication_id = ?',
+            array((int) $pubId)
+        );
+        foreach ($result as $row) return (int) $row->submission_id;
+        return 0;
     }
 
     /**
@@ -253,8 +271,9 @@ class ArticleNumberService
 
         $counts = array('derive' => 0, 'manual' => 0, 'realpage' => 0, 'empty' => 0, 'hasWorkNumber' => 0, 'changed' => 0, 'duplicate' => 0, 'unpublished' => 0);
         $samples = array('derive' => array(), 'manual' => array(), 'duplicate' => array());
-        // Track derived values within this run to catch intra-batch duplicates.
-        $derivedSeen = array();
+        // Articles whose Pages value looks like an article number.
+        $candidates = array();
+        $scope = $this->getUniquenessScope($contextId);
         // Identity of the full candidate set (every candidate, not just sampled),
         // for the panel's "did the data change since Scan?" staleness check.
         $sigParts = array();
@@ -309,6 +328,7 @@ class ArticleNumberService
                 'result' => '',
                 'reason' => '',
                 'duplicate' => false,
+                'duplicateOf' => null,
                 'articleNumber' => '',
             );
 
@@ -336,32 +356,14 @@ class ArticleNumberService
             $resultOf = array('derive' => 'convert', 'manual' => 'check', 'realpage' => 'skip', 'empty' => 'nopages');
             $record['result'] = $resultOf[$class];
             if ($class === 'derive') {
-                $value = trim((string) $pages);
-                $sigParts[] = $pubId . ':' . $value; // full-candidate-set identity
-                // Duplicate detection (journal scope) — REPORT only, never blocks.
-                // A collision with an existing workNumber elsewhere, or with a
-                // value already derived earlier in this run, is flagged.
-                $dupWith = isset($derivedSeen[$value]) ? $derivedSeen[$value] : $this->findWorkNumberCollision($contextId, $value, (int) $submission->getId(), 'journal');
-                $record['articleNumber'] = $value;
-                if ($dupWith) {
-                    $record['duplicate'] = true;
-                    $counts['duplicate']++;
-                    if (count($samples['duplicate']) < self::SAMPLE_LIMIT) $samples['duplicate'][] = "DUPLICATE: '$value'  #$pubId collides with #$dupWith";
-                }
-                $derivedSeen[$value] = $pubId;
-
-                if (count($samples['derive']) < self::SAMPLE_LIMIT) $samples['derive'][] = "#$pubId  pages='" . $pages . "'  ->  workNumber='" . $pages . "'";
-                if ($mode === 'apply') {
-                    $before = $publication->getData('pages');
-                    $this->setRawSetting($dao, $pubId, self::PROP_WORK_NUMBER, (string) $pages);
-                    $this->setRawSetting($dao, $pubId, self::SETTING_DERIVED, '1');
-                    // pages-immutability self-check (cheap, per record)
-                    $after = $this->getRawSetting($dao, $pubId, 'pages');
-                    if ($after !== null && $after !== $before) {
-                        return array('counts' => $counts, 'samples' => $samples, 'records' => $records, 'stats' => $stats, 'aborted' => true, 'abortPubId' => $pubId, 'signature' => md5(implode('|', $sigParts)));
-                    }
-                    $counts['changed']++;
-                }
+                $candidates[] = array(
+                    'index' => count($records),
+                    'pubId' => (int) $pubId,
+                    'submissionId' => (int) $submission->getId(),
+                    'issueId' => $publication->getData('issueId'),
+                    'pages' => (string) $pages,
+                    'value' => trim((string) $pages),
+                );
             } elseif ($class === 'manual') {
                 // Not capped: every value that needs a human decision is listed.
                 $samples['manual'][] = "#$pubId  pages='" . $pages . "'";
@@ -370,7 +372,73 @@ class ArticleNumberService
             $records[] = $record;
         }
 
+        // Candidates are decided only now, when all of them are known. A number is
+        // NEVER written twice (within the journal's uniqueness scope): when another
+        // article already has it, or when two candidates would claim it, a person
+        // has to say which article it belongs to, so they go to the manual list.
+        $claims = array();
+        foreach ($candidates as $c) {
+            $key = $this->claimKey($c, $scope);
+            if ($key !== null) $claims[$key][] = $c['submissionId'];
+        }
+        foreach ($candidates as $c) {
+            $value = $c['value'];
+            $pubId = $c['pubId'];
+            $hit = $this->findWorkNumberCollision($contextId, $value, $c['submissionId'], $scope, $c['issueId']);
+            $otherId = $hit ? $this->submissionIdOf($hit) : null;
+            $key = $this->claimKey($c, $scope);
+            if (!$otherId && $key !== null && count($claims[$key]) > 1) {
+                foreach ($claims[$key] as $sid) {
+                    if ($sid !== $c['submissionId']) { $otherId = $sid; break; }
+                }
+            }
+            if ($otherId) {
+                $counts['derive']--;
+                $counts['manual']++;
+                $counts['duplicate']++;
+                $records[$c['index']]['result'] = 'check';
+                $records[$c['index']]['reason'] = 'duplicate';
+                $records[$c['index']]['duplicate'] = true;
+                $records[$c['index']]['duplicateOf'] = $otherId;
+                // Not capped: these need a human decision too.
+                $samples['duplicate'][] = "#$pubId  pages='" . $c['pages'] . "'  same number as submission #$otherId";
+                continue;
+            }
+            $records[$c['index']]['articleNumber'] = $value;
+            $sigParts[] = $pubId . ':' . $value; // full-candidate-set identity
+            if (count($samples['derive']) < self::SAMPLE_LIMIT) $samples['derive'][] = "#$pubId  pages='" . $c['pages'] . "'  ->  workNumber='" . $value . "'";
+            if ($mode === 'apply') {
+                $this->setRawSetting($dao, $pubId, self::PROP_WORK_NUMBER, $value);
+                $this->setRawSetting($dao, $pubId, self::SETTING_DERIVED, '1');
+                // pages-immutability self-check (cheap, per record)
+                $after = $this->getRawSetting($dao, $pubId, 'pages');
+                if ($after !== null && $after !== $c['pages']) {
+                    return array('counts' => $counts, 'samples' => $samples, 'records' => $records, 'stats' => $stats, 'aborted' => true, 'abortPubId' => $pubId, 'signature' => md5(implode('|', $sigParts)));
+                }
+                $counts['changed']++;
+            }
+        }
+
         return array('counts' => $counts, 'samples' => $samples, 'records' => $records, 'stats' => $stats, 'aborted' => false, 'abortPubId' => null, 'signature' => md5(implode('|', $sigParts)));
+    }
+
+    /**
+     * Key under which two migration candidates would claim the same number: the
+     * value (compared without case, as the database does), plus the issue when
+     * uniqueness is per issue. Null when the candidate cannot clash (per-issue
+     * uniqueness, no issue assigned).
+     *
+     * @param array  $candidate
+     * @param string $scope 'journal' | 'issue'
+     * @return string|null
+     */
+    private function claimKey(array $candidate, $scope)
+    {
+        $value = function_exists('mb_strtolower') ? mb_strtolower($candidate['value'], 'UTF-8') : strtolower($candidate['value']);
+        if ($scope !== 'issue') {
+            return $value;
+        }
+        return empty($candidate['issueId']) ? null : ((int) $candidate['issueId']) . '|' . $value;
     }
 
     /**

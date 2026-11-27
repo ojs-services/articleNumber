@@ -30,6 +30,8 @@
 
 require(dirname(__FILE__) . '/../../../../tools/bootstrap.inc.php');
 require_once(dirname(__FILE__) . '/../ArticleNumberService.inc.php');
+import('lib.pkp.classes.plugins.GenericPlugin');
+require_once(dirname(__FILE__) . '/../ArticleNumberPlugin.inc.php');
 
 class migrateArticleNumbers extends CommandLineTool {
 
@@ -66,7 +68,8 @@ class migrateArticleNumbers extends CommandLineTool {
             $contexts = array($one);
         }
 
-        $service = new ArticleNumberService();
+        // With the plugin, so each journal's uniqueness scope is honoured.
+        $service = new ArticleNumberService(new ArticleNumberPlugin());
 
         $grand = array('derive' => 0, 'manual' => 0, 'realpage' => 0, 'empty' => 0, 'hasWorkNumber' => 0, 'changed' => 0, 'duplicate' => 0, 'unpublished' => 0);
 
@@ -93,8 +96,8 @@ class migrateArticleNumbers extends CommandLineTool {
                 foreach ($samples['manual'] as $s) echo "    $s\n";
             }
             if (!empty($samples['duplicate'])) {
-                echo "  Duplicates (still derived — historical data is kept as-is; review):\n";
-                foreach ($samples['duplicate'] as $s) echo "    $s\n";
+                echo "  Same number as another article (NOT converted; decide which article it belongs to):\n";
+                foreach ($samples['duplicate'] as $s) echo "    $s  -> skipped, reported only\n";
             }
             echo "\n";
 
@@ -110,11 +113,11 @@ class migrateArticleNumbers extends CommandLineTool {
         } else {
             echo "  candidates (derive):        {$grand['derive']}\n";
             echo "  needs manual review:        {$grand['manual']}\n";
+            if ($grand['duplicate']) echo "    of which same number as another article: {$grand['duplicate']} (not written)\n";
             echo "  real page ranges (skipped): {$grand['realpage']}\n";
             echo "  empty pages (skipped):      {$grand['empty']}\n";
             echo "  already had workNumber:     {$grand['hasWorkNumber']}\n";
             echo "  not published (skipped):    {$grand['unpublished']}\n";
-            if ($grand['duplicate']) echo "  DUPLICATES flagged:          {$grand['duplicate']} (derived anyway — see per-journal list)\n";
             if ($this->mode === 'apply') echo "  WRITTEN (workNumber derived): {$grand['changed']}\n";
             if ($this->mode === 'dry-run') echo "  (dry-run: nothing was written)\n";
         }
