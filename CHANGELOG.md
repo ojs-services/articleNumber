@@ -19,6 +19,7 @@ Target platform: **OJS 3.3.x** (PHP 7.4–8.1). OJS 3.4 and 3.5 have their own p
 - The command-line migration now follows each journal's uniqueness setting.
 - The active theme (and its parent) is now found by its folder, so a theme that declares it shows the number is really asked; before, only the built-in list of theme names took effect.
 - On narrow screens the Scan table scrolls inside its own box instead of widening the settings window.
+- If this package is installed on OJS 3.4 or 3.5 by mistake, it now stays inactive.
 
 ### Türkçe
 - Başka bir makalenin kullandığı numara artık yayımda da göçte de yazılmaz (benzersizlik ayarına göre). Eskiden yazılıyor, yalnız bildiriliyordu. Şimdi alan boş kalır, yayım penceresinde ve Makale Numarası alanının altında uyarı çıkar (yayımlayan kişinin açtığı bir sonraki sayfada bildirim de görünür; yayımlama engellenmez), Tarama makaleyi öbür gönderinin numarasıyla elle kontrol listesine alır. İki makaleye aynı numara düşecekse hiçbirine yazılmaz.
@@ -29,6 +30,7 @@ Target platform: **OJS 3.3.x** (PHP 7.4–8.1). OJS 3.4 and 3.5 have their own p
 - Komut satırı göçü artık her derginin benzersizlik ayarına uyar.
 - Etkin tema (ve üst teması) artık klasöründen bulunuyor; numarayı gösterdiğini bildiren tema gerçekten soruluyor. Eskiden yalnız yerleşik tema adı listesi işe yarıyordu.
 - Dar ekranlarda Tarama tablosu ayar penceresini genişletmek yerine kendi kutusunda kaydırılır.
+- Bu paket yanlışlıkla OJS 3.4 ya da 3.5'e kurulursa artık etkisiz kalır.
 
 ## [1.7.0.8] — 2026-11-24 — ojs3.3
 
