@@ -2,173 +2,91 @@
 
 [English](README.md)
 
-**OJS 3.3** için genel (generic) bir eklenti. Dijital öncelikli bir **Makale Numarası**'nı
-(*elocation-id*) **sayfa aralığı alanından ayrı** bir metaveri olarak yönetir; dijital
-öncelikli dergilerin makaleleri gerçekte tanımladığı biçimde (ör. *PLoS ONE 15(4):
-e0231470*, *Electron. J. Combin. 27 (2020) P2.16*).
+**OJS 3.4.0.x ve 3.5.0.x** için genel (generic) eklenti; iki sürüm için tek paket. OJS 3.3'ün kendi paketi vardır (1.x).
 
-OJS'te bunun için ayrı bir alan yoktur; editörler değeri `pages` alanına sıkıştırır.
-Bu, aşağı akıştaki metaveriyi bozar: Google Scholar sahte bir `firstpage = lastpage`
-indeksler, Crossref ayrı bir `<item_number>` bekler, PMC/PubMed `<elocation-id>`
-ister. Bu eklenti bu boşluğu uçtan uca doldurur ve **çekirdek veriye hiç dokunmaz**;
-özellikle **`pages` alanına asla yazmaz**.
+Article Number (Makale Numarası), bir makaleye sayfa aralığından ayrı, kendi üst verisi olan dijital bir konum bilgisi verir (*elocation-id*, örneğin `e0231470` veya `P2.16`). Crossref, JATS, Google Scholar ve atıf çıktısı bunu uydurma bir sayfa aralığı yerine makale numarası olarak alır.
 
-**Gereksinimler:** OJS 3.3.x · PHP 7.4–8.1 · MySQL/MariaDB. Tek ve çok dergili
-kurulumlarda, varsayılan ve özel temalarda çalışır. OMP/OPS kapsam dışıdır. OJS 3.4 ve
-3.5'in kendi paketi vardır (2.x).
-
-## Tasarım ilkeleri
-
-- **Veri adı = `workNumber`.** Değer, PKP'nin iç çekirdek özellik adı `workNumber`
-  altında `publication_settings` tablosunda saklanır (sürümlü, yayın başına).
-  Kullanıcıya görünen etiket **"Makale Numarası"**dır. Bu uyum sayesinde OJS çekirdeği
-  bir gün özelliği kendisi getirirse devir sıfır göçle yapılabilir.
-- **Çekirdek salt okunur.** Eklenti yalnızca kendi `workNumber` değerini yazar.
-  `pages` veya başka bir çekirdek alana dokunmaz.
-- **Dergi başına isteğe bağlı.** Özellik varsayılan olarak KAPALIDIR; her dergi ayrı
-  açar. Kapalıyken OJS davranışı değişmez.
-- **Çatal değil, ekleme.** Dışa aktarım entegrasyonu (Crossref / JATS / Scholar)
-  mevcut çıktıya eklenir; dışa aktarım eklentileri çatallanmaz.
-- **Karşılıklı dışlama bir dışa aktarım kuralıdır.** Makale numarası varken sayfa
-  aralığı dışa aktarım çıktısında bastırılır; ikisi birlikte gönderilmez.
+Sürekli yayın yapan dergilerde sayfa numarası yoktur. Birçoğu makale numarasını *Sayfalar* alanına yazar; Google Scholar bu durumda ilk sayfası son sayfasına eşit sahte bir kayıt dizinler, Crossref ve PMC de var olmayan bir sayfa aralığı alır. Eklenti bu boşluğu doldurur ve `pages` alanına hiçbir zaman yazmaz.
 
 ## Ne yapar
 
 | Alan | Davranış |
 |---|---|
-| Editör arayüzü | Yayın sayı-girişi formunda (*Sayfalar*'dan sonra) kullanım yönergeli "Makale Numarası" alanı; yayımlanmış koordinatın değiştirilmesi engellenir. |
-| Quick Submit | Aynı alan Quick Submit içe aktarma formunda da vardır. |
-| Benzersizlik | Aynı Makale Numarası bir dergide iki makaleye verilemez; yayımlanmamış makalede kayıtta engellenir. Kapsam dergi ayarıdır (varsayılan tüm dergi; isteğe bağlı sayı başına). |
-| Okur sayfası | Makale sayfasında "Makale Numarası: X" gösterir (temadan bağımsız); tema kendisi gösteriyorsa dergi bazında gizlenebilir. |
-| Google Scholar | Makale numarası varsa `citation_firstpage` numarayı taşır (PLOS'un yaptığı gibi) ve `citation_lastpage` gönderilmez; *Sayfalar*'dan üretilen sahte ilk = son sayfa çifti gönderilmez. |
-| Crossref | `<publisher_item><item_number item_number_type="article_number">` ekler ve `<pages>`'i çıkarır; XSD'ye uygundur; çatal yok. |
-| JATS | `<fpage>/<lpage>` yerine `<elocation-id>` yazar (JATS4R uyumlu). |
-| Atıf | Paketle gelen CSL stillerinde stile duyarlı eşleme (ör. APA "Article e298"); bkz. *Bilinen davranışlar ve sınırlar*. |
-| Göç | Sayfa alanına gömülü numaralardan `workNumber` doldurur: ayar panelinden (bu dergi) ya da komut satırı aracıyla (bir/tüm dergiler). Yalnızca türetir; `pages` asla yazılmaz. |
-| Üreteç | İsteğe bağlı, dergi başına, varsayılan kapalı: sıradaki numarayı önerir. |
+| Editör alanı | Yayın **Sayı** formunda, *Sayfalar*'dan sonra, kullanım yönergesiyle bir *Makale Numarası* alanı. |
+| Benzersizlik | Aynı numara bir dergide (ya da ayara göre bir sayıda) iki makaleye kaydedilemez. Denetim, yayımlanmamış makalede kayıtta engeller. Eklentinin kendisi de kullanılan bir numarayı yazmaz (yayımda da göçte de). |
+| QuickSubmit | Aynı alan QuickSubmit eklentisinin formunda da vardır; aynı yinelenen numara denetimiyle. |
+| Yayımlanmış makale | Makale yayımlandıktan sonra numarası kilitlenir; yatırılmış bir konum bilgisi yanlışlıkla değişmez. |
+| Makale sayfası | Makale ayrıntılarında *Makale Numarası: X* gösterir; tema numarayı kendisi basıyorsa dergi bazında gizlenebilir. |
+| Sayı içindekiler | Her makalenin satırında, normalde sayfa numarasının çıkacağı yerde numarayı gösterir. |
+| Google Scholar | Numarası olan makalede `citation_firstpage` makale numarasını taşır (PLOS'un yaptığı gibi) ve `citation_lastpage` gönderilmez; *Sayfalar*'dan üretilen sahte ilk = son sayfa çifti gitmez. Sürüm URL'lerinde (`article/view/ID/version/N`) hiçbir şey eklenmez; OJS çekirdeği de orada Scholar etiketi basmaz. Numarasız makale etkilenmez. |
+| Crossref | `<publisher_item><item_number item_number_type="article_number">` yazar, `<pages>` bırakılır. |
+| JATS | JATS eklentisi (jatsTemplate) kuruluysa `<fpage>` / `<lpage>` yerine `<elocation-id>` yazar. |
+| Atıflar | Numara, paketle gelen stillerin atfında görünür (APA: *Article e0231470*). *Bilinen sınırlar*'a bakın. |
+| Göç | *Sayfalar*'a yazılmış makale numaralarını yeni alana kopyalar: eklentinin ayar penceresinden (tek dergi) ya da komut satırından (bir ya da tüm dergiler). Kopyalar; `pages` değişmez, kopya geri alınabilir. |
+| Numara önerisi | İsteğe bağlı, varsayılan kapalı: yeni makale için sıradaki numarayı önerir. |
+| Diller | İngilizce, Türkçe, İspanyolca, Portekizce (Portekiz ve Brezilya). Başka bir arayüz dilinde eklenti metinleri İngilizce görünür. |
 
-## Durum
+Özellik her dergide **varsayılan olarak kapalıdır**. Dergi yöneticisi açana kadar hiçbir şey değişmez.
 
-OJS 3.3'te özellik tamam ve doğrulandı. Eklenti bağımsız bir yayın öncesi güvenlik ve
-uyumluluk incelemesinden geçti (Kritik/Yüksek bulgu yok; PHP 7.4 / 8.1 temiz; çekirdek
-dosyalarda değişiklik yok; dışa aktarım eklentisi çatalı yok). Test matrisi için
-[docs/QA-MATRIX.md](docs/QA-MATRIX.md), tasarım gerekçesi için
-[docs/TECHNICAL-NARRATIVE.md](docs/TECHNICAL-NARRATIVE.md) dosyalarına bakın.
+## Gereksinimler
 
-## Göç
-
-Makale numaralarını tarihsel olarak `pages` alanında tutan dergiler `workNumber`'ı
-doldurabilir. İşlem bir **türetmedir, taşıma değildir**: kaynak `pages` değeri okunur ve
-kopyalanır; **hiçbir kipte değiştirilmez**. Gerçek sayfa aralıkları (ör. `245-260`)
-hiçbir zaman otomatik aday olmaz; belirsiz değerler elle inceleme için işaretlenir; geri
-alma yalnızca aracın kendi türettiği değerleri siler (elle girilmiş Makale Numaralarına
-dokunulmaz).
-
-**Ayar panelinden (bu dergi):** eklentinin Ayarlar'ında **Tara** ile nelerin
-dönüştürüleceğini önizleyin (salt okunur), ardından **Uygula** ile bu numaraları Makale
-Numarası alanına kopyalayın ya da **Geri al** ile kaldırın. Uygula yalnızca bir taramadan
-sonra etkinleşir ve onay ister.
-
-**Komut satırından (bir ya da tüm dergiler):**
-
-```
-php plugins/generic/articleNumber/tools/migrateArticleNumbers.php <dry-run|apply|rollback> [journalPath|all]
-```
-
-Büyük arşivlerde panel, aday sayısı eşiği (varsayılan 2000) aşılınca **Uygula**'yı kilitler
-ve web isteği zaman aşımına tabi olmayan bu komuta yönlendirir. Paneldeki **Tara** ve
-**Geri al** hiçbir zaman eşikle sınırlanmaz.
+- OJS 3.4.0.x veya 3.5.0.x. OJS 3.4.0-10 (PHP 8.1) ve 3.5.0-5 (PHP 8.2) üzerinde sınandı.
+- `config.inc.php` değişikliği yok, veritabanı tablosu yok. Değer, yayın ayarlarında `workNumber` adıyla saklanır.
+- QuickSubmit desteği için eklenti galerisindeki ayrı *QuickSubmit* eklentisi gerekir.
+- JATS çıktısı için *JATS Template* (ve *OAI JATS*) eklentisi kurulu olmalıdır; OJS 3.5'te hazır gelir, OJS 3.4'te eklenti galerisinden kurulur.
 
 ## Kurulum
 
-1. Bu klasörü OJS 3.3 kurulumunuzda `plugins/generic/articleNumber/` altına kopyalayın.
-2. OJS'te: **Ayarlar → Web Sitesi → Eklentiler → Genel Eklentiler**'de *Article Number
-   Plugin*'i etkinleştirin.
-3. Eklenti satırında **Ayarlar**'a tıklayın ve *Bu dergi için Makale Numarası alanını
-   etkinleştir* kutusunu işaretleyin.
+Yönetici olarak oturum açın, *Website → Plugins → Upload a new plugin* ile `.tar.gz` paketini yükleyin ve genel eklentiler listesinde **Article Number Plugin**'i etkinleştirin. Ardından eklentinin *Settings* bağlantısını açıp *Enable the Article Number field for this journal* kutusunu işaretleyin.
 
 ## Ayarlar
 
-- **Makale Numarası alanını etkinleştir** — dergi başına ana anahtar (varsayılan kapalı).
-- **Makale ayrıntı bloğunda göster** (varsayılan açık) — temanız Makale Numarasını
-  kendisi gösteriyorsa (ör. Nivo, Atlas, Axis) iki kez görünmesin diye kapatın. Yalnızca
-  eklentinin sayfadaki öğesini etkiler; dışa aktarımı ve atıfı etkilemez.
-- **Benzersizlik kapsamı** — *tüm dergi* (varsayılan, önerilen) her Makale Numarasının
-  dergi genelinde benzersiz olmasını ister (sürekli yayın / PLoS modeli); *sayı başına*
-  yalnızca aynı sayı içinde benzersizlik arar (cilt/sayı içinde numaralandıran dergiler için).
-- **Makale Numarası Üreteci** (isteğe bağlı, varsayılan kapalı) — yeni, yayımlanmamış
-  makaleler için sıradaki numarayı önerir.
-- **Şablon** — öneri deseni: `{:04d}` sıfırla doldurulmuş sayaçtır (`e{:04d}` → e0001),
-  `{n}` düz sayaçtır. Öneri alanı hiçbir zaman kısıtlamaz; editör istediği değeri
-  yazabilir (ör. `P2.16`).
+- **Makale Numarası alanını etkinleştir** — dergi bazında, varsayılan kapalı.
+- **Makale ayrıntı bloğunda göster** — varsayılan açık; etkin tema numarayı kendisi basıyorsa (Atlas, Nivo, Axis, JournalPlus ya da bunu bildiren bir tema) kapalı başlar, böylece numara iki kez görünmez; ayar penceresi bunu belirtir. Siz açar ya da kapatırsanız seçiminiz korunur.
+- **Sayı içindekilerde göster** (varsayılan açık) — aynısı, sayı içindekiler sayfası için.
+- **Makale yayımlanırken numarayı sayfa değerinden türet** (varsayılan açık) — bir makale Makale Numarası olmadan yayımlandığında ya da zamanlandığında ve *Sayfalar* değeri bir makale numarasına benziyorsa (Tarama ile aynı kural: örneğin `e0231470`), değer alana kopyalanır. Gerçek sayfa aralıklarına ve belirsiz değerlere dokunulmaz, elle girilmiş numara hiçbir zaman ezilmez, *Sayfalar* değişmez. Başka bir makalenin kullandığı numara (aşağıdaki benzersizlik ayarına göre) **yazılmaz**: yayımlamadan önce yayım penceresinde ve *Makale Numarası* alanının altında uyarı çıkar, yayımlayan kişinin açtığı bir sonraki sayfada bir bildirim de görünür (yayım ekranının kendisinde değil), Tarama makaleyi elle kontrol listesine alır. Yayımlama engellenmez. Her numarayı kendiniz yazmak için buradan kapatın.
+- **Benzersizlik** — *tüm dergi* (varsayılan) ya da *sayı bazında*.
+- **Numara önerisi** (isteğe bağlı) — `e{:04d}` gibi bir kalıp (`e0001`, `e0002`, …). Öneri alanı hiçbir zaman sınırlamaz: istenen değer yazılabilir. Kullanımda olan numara önerilmez.
 
 ## Kullanım
 
-1. Bir makalenin **Yayın → Sayı** sekmesinde, *Sayfalar*'ın altındaki alana Makale
-   Numarasını yazın. *Sayfalar*'ı boş bırakın: makale numarası varken yetkili koordinat o
-   olur; ikisini birlikte göndermek aşağı akışta bozuk metaveri üretir.
-2. Makale **yayımlandıktan** sonra Makale Numarası kilitlenir (yatırılmış bir koordinatı
-   değiştirmek atıf/indeks eşleşmelerini bozar). Yayımlanmış makaleleri doldurmak için göç
-   aracını kullanın.
+1. Bir makalede *Publication → Issue* sekmesinde *Article Number* alanına numarayı yazın. *Pages* alanını boş bırakın: numara varken makalenin konum bilgisi odur. İkisi de doluysa Crossref, JATS ve Google Scholar Makale Numarasını kullanır; DOAJ, PubMed ve diğer dışa aktarımlar Pages alanını kullanır.
+2. Yayımdan sonra numara kilitlenir. Zaten yayımlanmış makaleler için formu değil, aşağıdaki göçü kullanın.
 
-## Tema entegrasyonu
+## Göç
 
-Makale Numarası varsayılan olarak her temada gösterilir (ayrıntı/kenar çubuğu öğesi).
-Temanızın **kendi yerinde**, örneğin sayfa aralığının yerine, göstermek için
-`{article_number}` Smarty yardımcısını kullanın:
+Numarayı *Sayfalar*'a yazmış dergiler içindir. Eklenti `e0231470`, `e123`, `P2.16`, `ID45` ve uzun sıfır dolgulu numaraları tanır; gerçek sayfa aralıklarına (`245-260` ve `I-VIII` gibi Roma rakamlı ön kısım) dokunulmaz; belirsiz değerler (örneğin `e-762`, `e714-0`, `Editorial`) yalnızca elle bakılmak üzere, her biri ayrı satırda listelenir; araç bunları hiçbir zaman yeniden yazmaz. Başka bir makalede zaten bulunan ya da iki makaleye birden düşecek bir değer için de aynısı geçerlidir (benzersizlik ayarına göre): hiçbiri yazılmaz, her biri öbür gönderinin numarasıyla listelenir, karar sizindir.
 
-```smarty
-{article_number publication=$publication assign="articleNumber"}
-{if $articleNumber}Art. no. <b>{$articleNumber|escape}</b>
-{elseif $publication->getData('pages')}p. <b>{$publication->getData('pages')|escape}</b>{/if}
+- **Ayar penceresi:** *Scan* neyin dönüştürüleceğini gösterir, *Apply* kopyalar, *Undo* aracın kopyaladıklarını kaldırır (elle girilen numaralar kalır). Elle kontrol gerektiren değerler sonucun en üstünde tam liste olarak görünür (yayın no, sayı, makale başlığı, *Sayfalar* değeri ve nedeni); ardından sayımlar gelir: dergideki makaleler (yayımlanmış ve diğer), toplam yayın sürümü ve dönüştürülecekler. Yalnız her makalenin güncel sürümü dönüştürülür. Yalnız yayımlanmış ve zamanlanmış makaleler dönüştürülür; devam eden ya da reddedilen makaleler atlanır ve öyle gösterilir (makale yayımlandığında *Sayfalar* değeri başka makalenin kullanmadığı bir makale numarasına benziyorsa numara kendiliğinden yazılır; değilse numarayı yayımdan önce Sayı formuna yazın). *Tam sonucu indir (CSV)* makale başına bir satır verir: dönüştürülecek, elle bakılacak, atlanan (gerçek sayfa aralığı, zaten numaralı, sayfa yok).
+- **Komut satırı:**
+
+```
+php plugins/generic/articleNumber/tools/migrateArticleNumbers.php <dry-run|apply|rollback> [dergiYolu|all]
 ```
 
-Tam kılavuz için [docs/THEME-INTEGRATION.md](docs/THEME-INTEGRATION.md) dosyasına bakın.
+Bir sınırın (varsayılan 2000 makale) üstünde pencere *Apply*'ı kilitler ve onun yerine komut satırını gösterir.
 
-## Bilinen davranışlar ve sınırlar
+Siz çalıştırmadıkça hiçbir şey taşınmaz. Göçten sonra, Crossref bu makaleler için bir sonraki yatırışta `pages` yerine `item_number` alır; Crossref'te kayıtlı olanlar o zamana kadar değişmez. Eklenti DOI'ye ve DOI sonekine hiçbir zaman bakmaz, değiştirmez.
 
-1. **IEEE "Art. no." etiketi** yalnızca sayfadaki **ana atıfa** uygulanır. AJAX stil
-   değiştirici ve indirilen atıf CSL `number`/`page` eşlemesini yansıtır ama etiket
-   yeniden yazımını yansıtmaz (OJS, çizim sonrası atıf kancası sunmaz).
-2. **DOAJ ve DataCite** dışa aktarımlarında ayrı bir makale numarası/elocation alanı
-   yoktur; değer bilinçli olarak hiçbir sayfa alanına **zorla yazılmaz**. Belgelenmiş bir
-   sınırdır; veri bozulmaz.
-3. **JATS köprüsü** bir JATS üreticisi gerektirir (ör. `jatsTemplate` eklentisi ya da bir
-   FullTextCreator). Kanca standarttır (`OAIMetadataFormat_JATS::findJats`); üretici yoksa
-   düzeltilecek JATS de yoktur.
-4. **Üreteç sıradaki numarayı alana doldurmaz**, alanın yardım metninde **önerir**; çünkü
-   OJS alanın reaktif değerini yayından yeniden eşitler. Öneri serbest bir metin kalır.
-5. **Yayımlanmış koordinatın değişmezliği:** form, yayımlanmış bir makalenin Makale
-   Numarasının değiştirilmesini ya da eklenmesini engeller. Eski yayımlanmış içeriği doğru
-   alana taşımak için (yalnızca `pages` gerçekten vekil bir numara taşıyorsa) formu değil
-   göç aracını kullanın. Araç ne değeri ne de `pages`'i değiştirir ve Crossref'e **otomatik
-   yeniden yatırma yapmaz**.
-6. **Göç aracı bir türetmedir:** `pages` her kipte salt okunurdur; gerçek sayfa aralıkları
-   (ör. `245-260`) hiçbir zaman otomatik aday olmaz; geri alma yalnızca aracın kendi
-   türettiği değerleri siler.
-7. **"Makale ayrıntı bloğunda göster"** ayarı: teması Makale Numarasını kendisi basan
-   dergiler (Nivo/Atlas/Axis) çift gösterimi önlemek için bunu kapatabilir (aksi halde numara
-   iki kez görünür). Yalnızca eklentinin sayfadaki kartını etkiler; dışa aktarımı, atıfı ya
-   da Google Scholar düzeltmesini **etkilemez**.
-8. **ABNT, Harvard ve IEEE Makale Numarasını "p." (sayfa) diye etiketler**, örn. "p. e0500".
-   Atıf eşlemesi stile duyarlıdır (1.5.0'dan beri): `article-journal` için CSL `number`
-   değişkenini basan stiller (MLA) yalnızca `number` alır, APA "Article e…" etiketini korur.
-   Ancak ABNT/Harvard/IEEE dergi makalelerinde `number`'ı hiç basmaz ve `page` yuvasına "p."
-   etiketi/öneki dayatır; numara **görünür ve doğrudur** ama sayfa etiketiyle gösterilir.
-   Kaldırmak, paketle gelen CSL dosyalarını çatallamayı gerektirir; eklenti bunu yapmaz.
-9. **RIS ve BibTeX indirmeleri Makale Numarasını sayfa alanında taşır**, makinece okunur
-   kanonik bir alanda değil (RIS → `SP`, BibTeX → `pages`). Değer mevcut ve doğrudur,
-   saklanan `pages` alanı sızmaz. BibTeX'in kanonik `eid` alanına yazmak paketle gelen
-   `bibtex.csl`'i çatallamayı gerektirir (yapılmadı). Kanonik, standartlara uygun makale
-   numarası metaverisi Crossref (`item_number`) ve JATS (`elocation-id`) ile iletilir.
-10. **Native XML dışa ve içe aktarım Makale Numarasını taşımaz.** Dışa aktarılıp başka bir
-    dergiye içe aktarılan makale numarasız gelir; *Sayfalar* değeri gelir.
-11. **DOAJ, PubMed ve TR Dizin dışa aktarımları** Makale Numarasını değil *Sayfalar*
-    alanını okur. (Crossref numarayı okur; bkz. yukarısı.)
-12. **OAI-PMH:** paketle gelen hiçbir biçim (`oai_dc`, `oai_marc`, `marcxml`, `rfc1807`)
-    numarayı taşımaz. Numara yalnızca bir JATS biçiminde `elocation-id` olarak çıkar ve
-    yalnızca bir JATS üreticisi kuruluysa (madde 3).
+## Temalar
 
-## Lisans
+Kutudan çıktığı gibi numara her temada makale ayrıntılarında bir öğe olarak görünür. Numarayı kendi yerinde basmak isteyen tema `{article_number}` yardımcısını kullanabilir; bkz. [docs/THEME-INTEGRATION.md](docs/THEME-INTEGRATION.md). Tema numarayı zaten gösteriyorsa yukarıdaki iki gösterim ayarını kapatın. Tema bunu kendisi de bildirebilir; temanın yanıtı eklentinin yerleşik listesinden önce gelir.
 
-GNU GPL v3. Bkz. `LICENSE`.
+## Bilinen sınırlar
+
+- **IEEE:** *Art. no.* etiketi yalnızca makale sayfasındaki ana atıfa uygulanır. Stil değiştirici ve indirilen atıf numarayı *p.* etiketiyle gösterir.
+- **ABNT, Harvard, IEEE:** bu stiller her konum bilgisini *p.* diye etiketler; numara doğru ama bu etiketle görünür. Paketle gelen stil dosyalarına dokunulmaz.
+- **RIS ve BibTeX indirmeleri** numarayı sayfa alanında taşır (`SP`, `pages`).
+- **Native XML dışa ve içe aktarım** numarayı taşımaz. Başka bir dergiye aktarılan makale numarasız gelir (*Sayfalar* değeri gelir).
+- **DOAJ, PubMed ve TR Dizin dışa aktarımları** numarayı değil *Sayfalar* alanını kullanır. **Dublin Core ve DataCite**'te burada makale numarası alanı yoktur; `pages` değerine dokunulmaz.
+- **OAI-PMH:** numara yalnızca JATS'ta (`elocation-id`) çıkar. `oai_dc` yalnızca *Sayfalar*'ı taşır; MARC biçimleri ikisini de taşımaz.
+- **Numarayı kendisi basan temalarda** (örneğin Nivo, Axis) makale sayfasındaki kartı kapatın (*Makale ayrıntı bloğunda göster*), yoksa numara iki kez görünür.
+- **Crossref:** bir `item_number` en çok 32 karakter olabilir; daha uzun bir numara Crossref dosyasını geçersiz kılar.
+- **Numara önerisi:** alanın altında yardım metni olarak gösterilir; sizin için doldurulmaz.
+- **QuickSubmit** numara önerisi göstermez: öneri yalnızca makalenin *Publication → Issue* formunda çıkar, QuickSubmit ise makaleyi tek adımda yayımlar.
+
+## Lisans ve destek
+
+GNU GPL v3.
+
+**OJS Services** — [ojs-services.com](https://ojs-services.com) · info@ojs-services.com

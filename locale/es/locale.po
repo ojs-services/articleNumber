@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: Article Number Plugin\n"
 "Report-Msgid-Bugs-To: \n"
 "Last-Translator: OJS Services <info@ojs-services.com>\n"
-"Language-Team: Spanish\n"
-"Language: es_ES\n"
+"Language-Team: es\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -15,7 +15,7 @@ msgid "plugins.generic.articleNumber.name"
 msgstr "Módulo Número de artículo"
 
 msgid "plugins.generic.articleNumber.description"
-msgstr "Gestiona un «Número de artículo» (elocation-id) propio de la publicación digital como metadato independiente del campo de páginas: conforme a los estándares de Crossref, JATS/PMC y Google Scholar, y alineado con el nombre de la propiedad del núcleo de PKP para un traspaso futuro sin migración."
+msgstr "Gestiona un «Número de artículo» (elocation-id) propio de la publicación digital como metadato independiente del campo de páginas: conforme a los estándares de Crossref, JATS/PMC y Google Scholar."
 
 # Settings ---------------------------------------------------------------
 
@@ -46,7 +46,7 @@ msgid "plugins.generic.articleNumber.field.label"
 msgstr "Número de artículo"
 
 msgid "plugins.generic.articleNumber.field.description"
-msgstr "El localizador de este artículo en la publicación digital (elocation-id), p. ej., e0231470 o P2.16. Úselo <strong>en lugar de</strong> un intervalo de páginas: cuando hay un Número de artículo, este pasa a ser la referencia válida y el campo Páginas debe quedar vacío. Use Páginas solo en los artículos que tengan un intervalo real de páginas impresas. No rellene nunca los dos: eso genera metadatos erróneos en Crossref, JATS/PMC y Google Scholar."
+msgstr "El localizador de este artículo en la publicación digital (elocation-id), p. ej., e0231470 o P2.16. Úselo <strong>en lugar de</strong> un intervalo de páginas: cuando hay un Número de artículo, este pasa a ser la referencia válida y el campo Páginas debe quedar vacío. Use Páginas solo en los artículos que tengan un intervalo real de páginas impresas. Si se rellenan los dos, Crossref, JATS y Google Scholar usan el Número de artículo; DOAJ, PubMed y otras exportaciones usan Páginas."
 
 msgid "plugins.generic.articleNumber.citation.articleLabel"
 msgstr "Artículo"
@@ -68,9 +68,6 @@ msgstr "Patrón del número sugerido. Use {:04d} para un contador con ceros a la
 msgid "plugins.generic.articleNumber.generator.suggested"
 msgstr "Siguiente Número de artículo sugerido: <strong>{$number}</strong>. Escríbalo en el campo de arriba para usarlo."
 
-msgid "plugins.generic.articleNumber.generator.collision"
-msgstr "Aviso: este Número de artículo ya lo usa otro artículo de este número."
-
 # Uniqueness -------------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.settings.uniqueness"
@@ -87,6 +84,9 @@ msgstr "Elija si el Número de artículo debe ser único en toda la revista (el 
 
 msgid "plugins.generic.articleNumber.uniqueness.error"
 msgstr "Este Número de artículo ya lo usa otro artículo de esta revista. Cada artículo debe tener un Número de artículo único."
+
+msgid "plugins.generic.articleNumber.uniqueness.error.issue"
+msgstr "Este Número de artículo ya lo usa otro artículo de este número. Cada artículo de un número debe tener un Número de artículo único."
 
 # In-panel migration -----------------------------------------------------
 
@@ -173,3 +173,76 @@ msgstr "Active primero la función Número de artículo en esta revista."
 
 msgid "plugins.generic.articleNumber.field.error.published"
 msgstr "Este artículo ya está publicado, por lo que su Número de artículo no se puede cambiar: la referencia publicada es permanente y cambiarla rompería la correspondencia de citas e indexación. Para asignar un Número de artículo a artículos ya publicados, use la herramienta de migración del módulo."
+
+msgid "plugins.generic.articleNumber.migrate.scan.articles"
+msgstr "%a% artículo(s) en esta revista: %p% publicados o programados, %o% en curso o rechazados."
+
+msgid "plugins.generic.articleNumber.migrate.scan.versions"
+msgstr "En total hay %v% versiones de publicación. Solo se convierte la versión actual de cada artículo; las versiones anteriores no se tocan."
+
+msgid "plugins.generic.articleNumber.migrate.manual.title"
+msgstr "%m% valor(es) requieren revisión manual. NO se convertirán:"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.id"
+msgstr "ID de publicación"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.issue"
+msgstr "Número"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.title"
+msgstr "Título del artículo"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.pages"
+msgstr "Valor de Páginas"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.reason"
+msgstr "Por qué requiere revisión"
+
+msgid "plugins.generic.articleNumber.migrate.reason.number"
+msgstr "Un número suelto: podría ser una página real"
+
+msgid "plugins.generic.articleNumber.migrate.reason.roman"
+msgstr "Solo números romanos o letras: podría ser una página preliminar"
+
+msgid "plugins.generic.articleNumber.migrate.reason.text"
+msgstr "Texto, no un número"
+
+msgid "plugins.generic.articleNumber.migrate.reason.mixed"
+msgstr "Letras, dígitos y puntuación en un patrón que la herramienta no reconoce"
+
+msgid "plugins.generic.articleNumber.migrate.reason.other"
+msgstr "Patrón no reconocido"
+
+msgid "plugins.generic.articleNumber.migrate.csv"
+msgstr "Descargar el resultado completo (CSV)"
+
+msgid "plugins.generic.articleNumber.migrate.csv.hint"
+msgstr "Una fila por artículo: por convertir, por revisar a mano, omitidos y ya numerados."
+
+msgid "plugins.generic.articleNumber.settings.showInDetails.themeNote"
+msgstr "Su tema activo ya muestra el Número de artículo por sí mismo, por eso esta opción está desactivada por defecto. Actívela solo si también desea el elemento propio del plugin."
+
+msgid "plugins.generic.articleNumber.settings.deriveOnPublish"
+msgstr "Derivar el número del valor de Páginas al publicar un artículo"
+
+msgid "plugins.generic.articleNumber.settings.deriveOnPublish.description"
+msgstr "Cuando un artículo se publica o se programa sin Número de artículo y su valor de Páginas parece un número de artículo (por ejemplo, e0231470), ese valor se copia al campo Número de artículo. Los intervalos reales de páginas y los valores poco claros no se tocan, un número escrito a mano nunca se sustituye y Páginas nunca se modifica. No se escribe un número que ya use otro artículo: se le avisa en la ventana de publicación y debajo del campo Número de artículo, y el Análisis lo incluye en la lista de revisión manual."
+
+msgid "plugins.generic.articleNumber.migrate.scan.unpublished"
+msgstr "%u% artículo(s) se omitieron porque no están publicados (en curso o rechazados). Cuando un artículo se publica, su número se rellena automáticamente si su valor de Páginas parece un número de artículo que ningún otro artículo usa; si no, escríbalo en el formulario del número antes de publicar."
+
+# A number another article already uses is never written ------------
+msgid "plugins.generic.articleNumber.duplicate.publishForm"
+msgstr "No se escribirá ningún Número de artículo: el valor de Páginas «{$value}» ya lo usa el envío #{$otherId}. Puede publicar de todos modos. Para dar un número a este artículo, cierre esta ventana, escriba un Número de artículo distinto y después publique."
+
+msgid "plugins.generic.articleNumber.duplicate.notice"
+msgstr "No se escribió ningún Número de artículo en el envío #{$submissionId}: el valor de Páginas «{$value}» ya lo usa el envío #{$otherId}. Para añadir un número distinto, retire la publicación o la programación del artículo, escríbalo en el campo Número de artículo y vuelva a publicar."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldPending"
+msgstr "El valor de Páginas «{$value}» ya lo usa el envío #{$otherId}, así que no se copiará aquí al publicar. Escriba un Número de artículo distinto o deje el campo vacío."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldSkipped"
+msgstr "Al publicar no se escribió ningún Número de artículo: el valor de Páginas «{$value}» ya lo usa el envío #{$otherId}. Para añadir un número distinto, retire la publicación del artículo, escríbalo aquí y vuelva a publicar."
+
+msgid "plugins.generic.articleNumber.migrate.reason.duplicate"
+msgstr "Mismo número que el envío #%id%: no se escribe dos veces"

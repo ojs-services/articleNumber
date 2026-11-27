@@ -1,7 +1,7 @@
-# Normalize all text files to LF line endings in the repository
+# Normalize all text files to LF line endings
 * text=auto eol=lf
 
-# Binary assets (defensive; none tracked at present)
+# Binary assets
 *.png binary
 *.jpg binary
 *.gif binary

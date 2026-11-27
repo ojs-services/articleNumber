@@ -4,8 +4,8 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-26T00:00:00+00:00\n"
 "PO-Revision-Date: 2026-06-26T00:00:00+00:00\n"
-"Language-Team: en_US\n"
-"Language: en_US\n"
+"Language-Team: en\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -16,7 +16,7 @@ msgid "plugins.generic.articleNumber.name"
 msgstr "Article Number Plugin"
 
 msgid "plugins.generic.articleNumber.description"
-msgstr "Manages a digital-first \"Article Number\" (elocation-id) as metadata separate from the page-range field — standards-compliant for Crossref, JATS/PMC and Google Scholar, and aligned with PKP's core property name for a future zero-migration hand-off."
+msgstr "Manages a digital-first \"Article Number\" (elocation-id) as metadata separate from the page-range field — standards-compliant for Crossref, JATS/PMC and Google Scholar."
 
 # Settings ---------------------------------------------------------------
 
@@ -47,7 +47,7 @@ msgid "plugins.generic.articleNumber.field.label"
 msgstr "Article Number"
 
 msgid "plugins.generic.articleNumber.field.description"
-msgstr "The digital-first locator for this article (elocation-id), e.g. e0231470 or P2.16. Use this <strong>instead of</strong> a page range — when an Article Number is set it becomes the authoritative coordinate, and you should leave the Pages field empty. Only use Pages for articles that have a genuine printed page range. Never fill both: doing so produces broken metadata in Crossref, JATS/PMC and Google Scholar."
+msgstr "The digital-first locator for this article (elocation-id), e.g. e0231470 or P2.16. Use this <strong>instead of</strong> a page range — when an Article Number is set it becomes the authoritative coordinate, and you should leave the Pages field empty. Only use Pages for articles that have a genuine printed page range. If both are filled, Crossref, JATS and Google Scholar use the Article Number; DOAJ, PubMed and other exports use Pages."
 
 msgid "plugins.generic.articleNumber.citation.articleLabel"
 msgstr "Article"
@@ -69,9 +69,6 @@ msgstr "Pattern for the suggested number. Use {:04d} for a zero-padded counter (
 msgid "plugins.generic.articleNumber.generator.suggested"
 msgstr "Suggested next Article Number: <strong>{$number}</strong> — type it into the field above to use it."
 
-msgid "plugins.generic.articleNumber.generator.collision"
-msgstr "Warning: this Article Number is already used by another article in this issue."
-
 # Uniqueness --------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.settings.uniqueness"
@@ -88,6 +85,9 @@ msgstr "Choose whether an Article Number must be unique across the entire journa
 
 msgid "plugins.generic.articleNumber.uniqueness.error"
 msgstr "This Article Number is already used by another article in this journal. Each article must have a unique Article Number."
+
+msgid "plugins.generic.articleNumber.uniqueness.error.issue"
+msgstr "This Article Number is already used by another article in this issue. Each article in an issue must have a unique Article Number."
 
 # Migration ---------------------------------------------------------
 
@@ -174,3 +174,76 @@ msgstr "Enable the Article Number feature for this journal first."
 
 msgid "plugins.generic.articleNumber.field.error.published"
 msgstr "This article is already published, so its Article Number cannot be changed — the published coordinate is permanent and changing it would break citation and indexing matches. To back-fill an Article Number on already-published articles, use the plugin's migration tool instead."
+
+msgid "plugins.generic.articleNumber.migrate.scan.articles"
+msgstr "%a% article(s) in this journal: %p% published or scheduled, %o% in progress or declined."
+
+msgid "plugins.generic.articleNumber.migrate.scan.versions"
+msgstr "Together they have %v% publication versions. Only the current version of each article is converted; earlier versions are left as they are."
+
+msgid "plugins.generic.articleNumber.migrate.manual.title"
+msgstr "%m% value(s) need a manual check. They will NOT be converted:"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.id"
+msgstr "Publication ID"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.issue"
+msgstr "Issue"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.title"
+msgstr "Article title"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.pages"
+msgstr "Pages value"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.reason"
+msgstr "Why it needs a check"
+
+msgid "plugins.generic.articleNumber.migrate.reason.number"
+msgstr "A bare number: it could be a real single page"
+
+msgid "plugins.generic.articleNumber.migrate.reason.roman"
+msgstr "Roman numerals or letters only: it could be a front-matter page"
+
+msgid "plugins.generic.articleNumber.migrate.reason.text"
+msgstr "Text, not a number"
+
+msgid "plugins.generic.articleNumber.migrate.reason.mixed"
+msgstr "Letters, digits and punctuation in a pattern the tool does not recognise"
+
+msgid "plugins.generic.articleNumber.migrate.reason.other"
+msgstr "Not a recognised pattern"
+
+msgid "plugins.generic.articleNumber.migrate.csv"
+msgstr "Download the full result (CSV)"
+
+msgid "plugins.generic.articleNumber.migrate.csv.hint"
+msgstr "One row per article: to convert, to check by hand, skipped and already numbered."
+
+msgid "plugins.generic.articleNumber.settings.showInDetails.themeNote"
+msgstr "Your active theme already shows the Article Number itself, so this is off by default. Turn it on only if you also want the plugin's own item."
+
+msgid "plugins.generic.articleNumber.settings.deriveOnPublish"
+msgstr "Derive the number from the pages value when an article is published"
+
+msgid "plugins.generic.articleNumber.settings.deriveOnPublish.description"
+msgstr "When an article is published or scheduled without an Article Number and its Pages value looks like an article number (for example e0231470), that value is copied into the Article Number field. Real page ranges and unclear values are left alone, a number typed by hand is never replaced, and Pages is never changed. A number that another article already uses is not written: you are warned in the publish window and under the Article Number field, and Scan lists it for a manual check."
+
+msgid "plugins.generic.articleNumber.migrate.scan.unpublished"
+msgstr "%u% article(s) were skipped because they are not published (in progress or declined). When an article is published, its number is filled in automatically if its Pages value looks like an article number that no other article uses; otherwise type it in the Issue form before publication."
+
+# A number another article already uses is never written ------------
+msgid "plugins.generic.articleNumber.duplicate.publishForm"
+msgstr "No Article Number will be written: the Pages value “{$value}” is already used by submission #{$otherId}. You can still publish. To give this article a number, close this window, type a different Article Number, then publish."
+
+msgid "plugins.generic.articleNumber.duplicate.notice"
+msgstr "No Article Number was written to submission #{$submissionId}: the Pages value “{$value}” is already used by submission #{$otherId}. To add a different number, unpublish or unschedule the article, type it in the Article Number field and publish again."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldPending"
+msgstr "The Pages value “{$value}” is already used by submission #{$otherId}, so it will not be copied here at publication. Type a different Article Number, or leave this empty."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldSkipped"
+msgstr "No Article Number was written at publication: the Pages value “{$value}” is already used by submission #{$otherId}. To add a different number, unpublish the article, type it here and publish again."
+
+msgid "plugins.generic.articleNumber.migrate.reason.duplicate"
+msgstr "Same number as submission #%id%: it is not written twice"

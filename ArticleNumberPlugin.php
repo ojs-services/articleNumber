@@ -1,34 +1,54 @@
 <?php
 /**
- * @file ArticleNumberPlugin.inc.php
+ * @file ArticleNumberPlugin.php
  *
- * Article Number Plugin for OJS — main plugin class (OJS 3.3 generic plugin).
+ * Article Number Plugin for OJS — main plugin class (generic plugin for
+ * OJS 3.4 and 3.5).
  *
- * Phase 1 scope (skeleton + schema + opt-in):
+ * What it does:
  *   - Registers a runtime `workNumber` (string, nullable) property on the
  *     publication schema via the `Schema::get::publication` hook.
  *   - Per-journal opt-in: the feature is OFF by default; each journal turns it
  *     on with the `enableWorkNumber` plugin setting. When OFF (or the plugin is
  *     disabled), nothing is injected and OJS behaves exactly as before.
- *   - Graceful hand-off guard: if core (or another plugin) ever defines
- *     `workNumber` natively, this plugin detects it and skips its own injection
- *     to avoid a clash — the data already lives in the right place.
+ *   - Hand-off guard: if the publication schema already defines the property
+ *     (`workNumber`), or OJS's own `articleNumber` property, this plugin leaves
+ *     its own injection out so the two never clash.
  *
- * Naming contract (non-negotiable, see master prompt §1):
- *   - DATA is stored under PKP's internal property name `workNumber` in
- *     `publication_settings` (versioned, per-publication). This guarantees a
- *     zero-migration hand-off if/when core ships the property.
+ * Naming contract:
+ *   - DATA is stored under the property name `workNumber` in
+ *     `publication_settings` (versioned, per-publication, no extra table).
  *   - The user-visible LABEL is "Article Number" (localized).
- *   - This plugin's own global classes are uniquely prefixed `ArticleNumber*`
- *     so they never collide with OJS core classes.
+ *   - The core `pages` field is only ever read, never written.
  */
 
-import('lib.pkp.classes.plugins.GenericPlugin');
+namespace APP\plugins\generic\articleNumber;
+
+use APP\core\Application;
+use APP\facades\Repo;
+use APP\notification\NotificationManager;
+use APP\template\TemplateManager;
+use Illuminate\Support\Facades\DB;
+use PKP\components\forms\FieldHTML;
+use PKP\components\forms\FieldText;
+use PKP\core\JSONMessage;
+use PKP\core\PKPApplication;
+use PKP\facades\Locale;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\AjaxModal;
+use PKP\plugins\GenericPlugin;
+use PKP\plugins\Hook;
+use PKP\plugins\PluginRegistry;
+use PKP\security\Role;
+use PKP\submission\PKPSubmission;
 
 class ArticleNumberPlugin extends GenericPlugin
 {
-    /** PKP-aligned publication property name (the stored data key). Do not change. */
+    /** Publication property name (the stored data key). Do not change. */
     public const PROP_WORK_NUMBER = 'workNumber';
+
+    /** Name of the article-number property in OJS releases that ship one natively. */
+    public const PROP_CORE_ARTICLE_NUMBER = 'articleNumber';
 
     /** Per-journal opt-in plugin setting name. */
     public const SETTING_ENABLE = 'enableWorkNumber';
@@ -60,6 +80,33 @@ class ArticleNumberPlugin extends GenericPlugin
     public const SETTING_HIDE_DETAILS_BLOCK = 'hideArticleNumberInDetails';
 
     /**
+     * Per-journal: the manager's explicit choice for the article-details block
+     * ('show' | 'hide'). Unset = the manager never chose, so the default follows
+     * the active theme (see themeShowsArticleNumber()). Strings, because OJS reads
+     * a falsy stored value back as null — a plain 0 could not be told from "unset".
+     * The legacy hide flag above is still written (and still honoured) for
+     * journals that saved it before this choice existed.
+     */
+    public const SETTING_DETAILS_CHOICE = 'articleNumberDetailsChoice';
+
+    /**
+     * Per-journal: do NOT derive the number from Pages when an article is
+     * published (1 = off, unset = on). Inverted flag for the same reason as the
+     * hide flags: OJS reads a falsy stored value back as null.
+     */
+    public const SETTING_NO_DERIVE_ON_PUBLISH = 'noDeriveOnPublish';
+
+    /**
+     * Themes that print the Article Number themselves, so the plugin's own item
+     * in the article-details block would show it twice. This is the ONE place that
+     * lists them. A theme whose plugin class has a public method
+     * rendersArticleNumber() answers for itself instead, yes or no (see
+     * docs/THEME-INTEGRATION.md). The list is compared with the theme's directory
+     * name, case-insensitively, on the active theme and its parents.
+     */
+    public const THEMES_SHOWING_NUMBER = array('atlas', 'nivo', 'axis', 'journalplus');
+
+    /**
      * Per-journal: HIDE the Article Number in the issue table of contents
      * (1 = hide, unset = show). Same inverted-flag storage as
      * SETTING_HIDE_DETAILS_BLOCK (OJS reads falsy settings back as null). On by
@@ -80,19 +127,17 @@ class ArticleNumberPlugin extends GenericPlugin
     /** Default candidate-count cap for the in-panel Apply (see above). */
     public const DEFAULT_MIGRATION_THRESHOLD = 2000;
 
+    /** This plugin's locale keys start with this. */
+    private const LOCALE_PREFIX = 'plugins.generic.articleNumber.';
+
+    /** Guards the once-per-request English fallback hook. */
+    private static $englishFallbackRegistered = false;
+
     /** Guards the once-per-request hand-off log line. */
     private static $handOffLogged = false;
 
     /** Guards once-per-request Smarty function registration. */
     private static $smartyRegistered = false;
-
-    /**
-     * Set true while the QuickSubmit form is rendering, so the shared
-     * SubmissionMetadataForm::AdditionalMetadata hook only injects our field in
-     * QuickSubmit (not in the normal submission wizard, which already has the
-     * IssueEntryForm field).
-     */
-    private static $inQuickSubmit = false;
 
     /** Lazily-built single service instance (the plugin's data logic lives here). */
     private $service = null;
@@ -107,7 +152,6 @@ class ArticleNumberPlugin extends GenericPlugin
     public function getService()
     {
         if ($this->service === null) {
-            $this->import('ArticleNumberService');
             $this->service = new ArticleNumberService($this);
         }
         return $this->service;
@@ -130,82 +174,120 @@ class ArticleNumberPlugin extends GenericPlugin
             return false;
         }
         $this->addLocaleData();
+        // Before the enabled check: the plugin list shows the name either way.
+        $this->_registerEnglishFallback();
 
         if ($this->getEnabled($mainContextId)) {
             // Inject the workNumber property into the publication schema at
             // runtime. The callback re-checks the per-journal opt-in and the
             // hand-off guard, so registering here unconditionally is safe.
-            HookRegistry::register('Schema::get::publication', array($this, 'addWorkNumberToSchema'));
+            Hook::add('Schema::get::publication', array($this, 'addWorkNumberToSchema'));
 
-            // Phase 2: editor UI. Inject the "Article Number" field into the
-            // publication issue-entry form, and enforce the published-coordinate
-            // immutability rule on save. Both callbacks re-check the per-journal
-            // opt-in, so registering here unconditionally is safe.
-            HookRegistry::register('Form::config::before', array($this, 'addFieldToIssueEntryForm'));
-            HookRegistry::register('Publication::validate', array($this, 'validateWorkNumberImmutability'));
+            // Publishing / scheduling: when the article has no Article Number and
+            // its Pages value passes the migration's "derive" rule, write it then
+            // (setting on by default). Never replaces a number typed by hand.
+            Hook::add('Publication::publish::before', array($this, 'deriveNumberOnPublish'));
+            Hook::add('Publication::publish', array($this, 'markDerivedOnPublish'));
+
+            // Editor UI: add the "Article Number" field to the publication
+            // issue-entry form, and lock the value once an article is published.
+            // Both callbacks re-check the per-journal opt-in, so registering
+            // here unconditionally is safe.
+            Hook::add('Form::config::before', array($this, 'addFieldToIssueEntryForm'));
+            // The publish confirmation window: warn before publishing when the
+            // number cannot be copied from Pages because it is already used.
+            Hook::add('Form::config::before', array($this, 'addDuplicateWarningToPublishForm'));
+            Hook::add('Publication::validate', array($this, 'validateWorkNumberImmutability'));
             // Uniqueness: block saving a duplicate Article Number on a not-yet-
             // published article (per the journal's scope). Same hook, separate
             // callback. Covers the normal workflow (IssueEntryForm + any service
             // edit); QuickSubmit is covered by its own validate hook below.
-            HookRegistry::register('Publication::validate', array($this, 'validateWorkNumberUniqueness'));
-            HookRegistry::register('quicksubmitform::validate', array($this, 'validateQuickSubmitUniqueness'));
+            Hook::add('Publication::validate', array($this, 'validateWorkNumberUniqueness'));
+            Hook::add('quicksubmitform::validate', array($this, 'validateQuickSubmitUniqueness'));
 
-            // Phase 3: reader-facing. Show the Article Number on the article
-            // landing page (theme-independent), and fix the Google Scholar meta
-            // bug: when an article number is the authoritative coordinate,
-            // citation_firstpage carries the number and no citation_lastpage
-            // is sent. The Scholar callback runs
-            // LATE so it overrides the googleScholar plugin (which runs at the
-            // default priority on the same hook).
-            HookRegistry::register('Templates::Article::Details', array($this, 'displayArticleNumber'));
+            // Reader-facing: show the Article Number on the article landing
+            // page (theme-independent), and send Google Scholar the article number
+            // as citation_firstpage (and no citation_lastpage) instead of a bogus
+            // first = last page pair, when an article number is the
+            // authoritative locator. The Scholar callback runs LATE so it
+            // overrides the googleScholar plugin (default priority, same hook).
+            Hook::add('Templates::Article::Details', array($this, 'displayArticleNumber'));
             // Reader-facing: show the Article Number in the issue table of contents,
             // where the page number normally appears (the core template only prints
             // `pages`, which is empty for digital-first articles).
-            HookRegistry::register('Templates::Issue::Issue::Article', array($this, 'displayArticleNumberInToc'));
-            HookRegistry::register('ArticleHandler::view', array($this, 'setScholarFirstPage'), HOOK_SEQUENCE_LATE);
+            Hook::add('Templates::Issue::Issue::Article', array($this, 'displayArticleNumberInToc'));
+            Hook::add('ArticleHandler::view', array($this, 'setScholarFirstPage'), Hook::SEQUENCE_LATE);
             // Expose a Smarty {article_number} helper so theme developers can
             // place the value wherever they want (e.g. in place of the page
             // range, in the theme's native location). See docs/THEME-INTEGRATION.md.
-            HookRegistry::register('TemplateManager::display', array($this, 'registerSmartyHelpers'));
+            Hook::add('TemplateManager::display', array($this, 'registerSmartyHelpers'));
 
-            // QuickSubmit (plugins/importexport/quickSubmit) support. QuickSubmit
-            // is an old PKP Form, so we attach to its base-class hooks instead of
-            // Form::config::before. Display goes through the core
-            // SubmissionMetadataForm::AdditionalMetadata template hook, scoped to
-            // QuickSubmit via a flag set on the QuickSubmit form's display hook so
-            // the normal submission wizard (which already has the IssueEntry field)
-            // is never affected. No fork; only workNumber is written.
-            HookRegistry::register('quicksubmitform::display', array($this, 'markQuickSubmitContext'));
-            HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'displayQuickSubmitWorkNumber'));
-            HookRegistry::register('quicksubmitform::readuservars', array($this, 'readQuickSubmitWorkNumber'));
-            HookRegistry::register('quicksubmitform::execute', array($this, 'saveQuickSubmitWorkNumber'));
+            // QuickSubmit (the separate PKP "QuickSubmit" plugin) support.
+            // QuickSubmit is a classic PKP Form, so we attach to its base-class
+            // hooks instead of Form::config::before. Its templates offer no
+            // metadata hook, so the field is added to the page through the
+            // `additionalContributorsFields` template variable that its form
+            // template prints. Nothing is forked; only workNumber is written.
+            Hook::add('quicksubmitform::display', array($this, 'displayQuickSubmitWorkNumber'));
+            Hook::add('quicksubmitform::readuservars', array($this, 'readQuickSubmitWorkNumber'));
+            Hook::add('quicksubmitform::execute', array($this, 'saveQuickSubmitWorkNumber'));
 
-            // Phase 4: Crossref export injection. The Crossref article filter
-            // fires Filter::execute as `articlecrossrefxmlfilter::execute` with
-            // the assembled DOMDocument by reference (Filter.inc.php). We attach
-            // to that output, add <publisher_item><item_number> and drop <pages>
-            // for articles that have a workNumber. The crossref plugin is never
-            // forked or modified.
-            HookRegistry::register('articlecrossrefxmlfilter::execute', array($this, 'injectCrossrefArticleNumber'));
+            // Crossref export. The Crossref article filter fires
+            // `articlecrossrefxmlfilter::execute` with the assembled DOMDocument
+            // by reference. We attach to that output, add
+            // <publisher_item><item_number> and drop <pages> for articles that
+            // have a workNumber. The crossref plugin is never forked or modified.
+            Hook::add('articlecrossrefxmlfilter::execute', array($this, 'injectCrossrefArticleNumber'));
 
-            // Phase 5a: JATS bridge. The canonical JATS generation hook
-            // (OAIMetadataFormat_JATS::findJats) hands us the generated JATS
-            // DOMDocument; running LATE (after the jatsTemplate plugin builds it)
-            // we replace <fpage>/<lpage> with <elocation-id> when a workNumber is
-            // set, satisfying JATS4R (the two must never coexist).
-            HookRegistry::register('OAIMetadataFormat_JATS::findJats', array($this, 'injectJatsElocationId'), HOOK_SEQUENCE_LATE);
+            // JATS. The JATS generation hook (OAIMetadataFormat_JATS::findJats)
+            // hands us the generated DOMDocument; running LATE (after the
+            // jatsTemplate plugin builds it) we replace <fpage>/<lpage> with
+            // <elocation-id> when a workNumber is set (JATS4R: the two must
+            // never coexist). Nothing happens when no JATS plugin is installed.
+            Hook::add('OAIMetadataFormat_JATS::findJats', array($this, 'injectJatsElocationId'), Hook::SEQUENCE_LATE);
 
-            // Phase 5b: citation. Map the workNumber onto the CSL data before
-            // citeproc renders it (the only available hook is pre-render).
-            HookRegistry::register('CitationStyleLanguage::citation', array($this, 'mapCitationWorkNumber'));
+            // Citations. Map the workNumber onto the CSL data before citeproc
+            // renders it (the only available hook is pre-render).
+            Hook::add('CitationStyleLanguage::citation', array($this, 'mapCitationWorkNumber'));
             // IEEE's bundled CSL renders the article number in the page slot
             // ("p. <n>"); IEEE convention is "Art. no. <n>". There is no
             // post-render hook, so we refine the primary on-page citation here,
             // after the citationStyleLanguage plugin has assigned it (LATE).
-            HookRegistry::register('ArticleHandler::view', array($this, 'refinePrimaryIeeeCitation'), HOOK_SEQUENCE_LATE);
+            Hook::add('ArticleHandler::view', array($this, 'refinePrimaryIeeeCitation'), Hook::SEQUENCE_LATE);
         }
 
         return $success;
+    }
+
+    /**
+     * English fallback for this plugin's own texts: OJS 3.4/3.5 print ##key## for
+     * a key that has no translation. The hook runs only for such keys, and only
+     * keys with this plugin's prefix are answered, so a language's own file always
+     * wins and nobody else's texts are touched.
+     * (Locale::registerLoader() is not usable: it crashes every page in OJS core.)
+     */
+    private function _registerEnglishFallback()
+    {
+        if (self::$englishFallbackRegistered) {
+            return;
+        }
+        self::$englishFallbackRegistered = true;
+        Hook::add('Locale::translate', function ($hookName, $args) {
+            $value = &$args[0];
+            $key = (string) $args[1];
+            $locale = (string) $args[4];
+            if ($locale === 'en' || strpos($key, self::LOCALE_PREFIX) !== 0) {
+                return Hook::CONTINUE;
+            }
+            $english = $args[3] === null
+                ? Locale::get($key, (array) $args[2], 'en')
+                : Locale::choice($key, (int) $args[3], (array) $args[2], 'en');
+            if (strpos($english, '##') === 0) {
+                return Hook::CONTINUE; // not in English either
+            }
+            $value = $english;
+            return Hook::ABORT;
+        });
     }
 
     /**
@@ -226,12 +308,14 @@ class ArticleNumberPlugin extends GenericPlugin
             return false;
         }
 
-        // Graceful hand-off: native (or third-party) workNumber already present
-        // → do not touch it. Log once so the operator can later retire us.
-        if (isset($schema->properties->{self::PROP_WORK_NUMBER})) {
+        // Hand-off guard: the property is already defined by someone else
+        // (a third party under our name, or OJS itself under its own
+        // `articleNumber` name) → do not add ours. Log once per request.
+        if (isset($schema->properties->{self::PROP_WORK_NUMBER})
+            || isset($schema->properties->{self::PROP_CORE_ARTICLE_NUMBER})) {
             if (!self::$handOffLogged) {
-                error_log('[articleNumber] Native "workNumber" property detected on the publication schema; '
-                    . 'skipping plugin schema injection (graceful hand-off).');
+                error_log('[articleNumber] The publication schema already defines an article-number property; '
+                    . 'skipping plugin schema injection.');
                 self::$handOffLogged = true;
             }
             return false;
@@ -270,8 +354,21 @@ class ArticleNumberPlugin extends GenericPlugin
     }
 
     /**
+     * The context id OJS uses for "the whole site" (0 in OJS 3.4, null in 3.5).
+     * Picked by capability so one code base serves both.
+     *
+     * @return int|null
+     */
+    private function _siteContextId()
+    {
+        return defined(PKPApplication::class . '::SITE_CONTEXT_ID')
+            ? PKPApplication::SITE_CONTEXT_ID
+            : PKPApplication::CONTEXT_ID_NONE;
+    }
+
+    /**
      * Resolve the current journal context, if any.
-     * @return Context|null
+     * @return \PKP\context\Context|null
      */
     private function _resolveContext()
     {
@@ -288,12 +385,13 @@ class ArticleNumberPlugin extends GenericPlugin
      * The field's value is pre-populated from the publication referenced in the
      * form's API action URL. Core fields are never modified.
      *
-     * @param string        $hookName
-     * @param FormComponent $form The form being configured (passed by ref by core)
+     * @param string $hookName
+     * @param array  $args [0]=>FormComponent The form being configured
      * @return bool false
      */
-    public function addFieldToIssueEntryForm($hookName, $form)
+    public function addFieldToIssueEntryForm($hookName, $args)
     {
+        $form = is_array($args) ? ($args[0] ?? null) : $args;
         // The issue-entry form's id is the literal 'issueEntry' (FORM_ISSUE_ENTRY).
         // Compare to the literal so we never touch unrelated forms and never
         // depend on a constant that may not be defined for those forms.
@@ -312,7 +410,7 @@ class ArticleNumberPlugin extends GenericPlugin
         $value = '';
         $publication = null;
         if (!empty($form->action) && preg_match('#/publications/(\d+)#', $form->action, $m)) {
-            $publication = \Services::get('publication')->get((int) $m[1]);
+            $publication = Repo::publication()->get((int) $m[1]);
             if ($publication) {
                 $value = $publication->getData(self::PROP_WORK_NUMBER);
             }
@@ -320,7 +418,7 @@ class ArticleNumberPlugin extends GenericPlugin
 
         $description = __('plugins.generic.articleNumber.field.description');
 
-        // Phase 6.5 — optional generator. When enabled, and only for an
+        // Optional generator. When enabled, and only for an
         // as-yet-unnumbered, NOT-yet-published article in an assigned issue,
         // pre-fill an editable suggestion (next sequential value in that
         // journal+issue). The value remains a free string the editor can change
@@ -331,7 +429,7 @@ class ArticleNumberPlugin extends GenericPlugin
         // place for a suggestion, and it keeps "suggestion" semantics: the editor
         // chooses to enter it). Only for an unnumbered, NOT-yet-published article
         // in an assigned issue, when the generator is enabled.
-        $isPublished = $publication && (int) $publication->getData('status') === STATUS_PUBLISHED;
+        $isPublished = $publication && (int) $publication->getData('status') === PKPSubmission::STATUS_PUBLISHED;
         if (($value === null || $value === '')
                 && $publication
                 && !$isPublished
@@ -339,8 +437,10 @@ class ArticleNumberPlugin extends GenericPlugin
                 && $publication->getData('issueId')) {
             $template = (string) ($this->getSetting($contextId, self::SETTING_TEMPLATE) ?: self::DEFAULT_TEMPLATE);
             $next = $this->_nextNumberForIssue((int) $publication->getData('issueId'), $template);
-            $suggestion = $this->_formatTemplate($template, $next);
-            $description .= '<br><em>' . __('plugins.generic.articleNumber.generator.suggested', array('number' => htmlspecialchars($suggestion))) . '</em>';
+            $suggestion = $this->_freeSuggestion($contextId, $publication, $template, $next);
+            if ($suggestion !== null) {
+                $description .= '<br><em>' . __('plugins.generic.articleNumber.generator.suggested', array('number' => htmlspecialchars($suggestion))) . '</em>';
+            }
         }
 
         // Predictive collision notice in the help text (the hard block happens on
@@ -348,12 +448,23 @@ class ArticleNumberPlugin extends GenericPlugin
         if ($value !== null && $value !== '' && $publication) {
             $scope = $this->getUniquenessScope($contextId);
             if ($this->isWorkNumberTaken($contextId, (string) $value, (int) $publication->getData('submissionId'), $scope, $publication->getData('issueId'))) {
-                $description .= '<br><strong>' . __('plugins.generic.articleNumber.generator.collision') . '</strong>';
+                $description .= '<br><strong>' . $this->_uniquenessErrorMessage($contextId) . '</strong>';
+            }
+        } elseif ($publication) {
+            $dup = $this->_publishDuplicate($contextId, $publication);
+            if ($dup) {
+                // A published article is locked, so the way to add a number differs.
+                $key = ((int) $publication->getData('status') === PKPSubmission::STATUS_PUBLISHED)
+                    ? 'plugins.generic.articleNumber.duplicate.fieldSkipped'
+                    : 'plugins.generic.articleNumber.duplicate.fieldPending';
+                $description .= '<br><strong>' . __($key, array(
+                    'value' => htmlspecialchars($dup['value']),
+                    'otherId' => $dup['otherId'],
+                )) . '</strong>';
             }
         }
 
-        import('lib.pkp.classes.components.forms.FieldText');
-        $field = new \PKP\components\forms\FieldText(self::PROP_WORK_NUMBER, [
+        $field = new FieldText(self::PROP_WORK_NUMBER, [
             'label' => __('plugins.generic.articleNumber.field.label'),
             'description' => $description,
             'value' => $value,
@@ -364,6 +475,126 @@ class ArticleNumberPlugin extends GenericPlugin
         $form->addField($field, array(FIELD_POSITION_AFTER, 'pages'));
 
         return false;
+    }
+
+    /**
+     * Hook callback for `Form::config::before`, publish confirmation window: when
+     * the Article Number is empty and the Pages value that would be copied into it
+     * is already used by another article, say so before the editor publishes.
+     * Publishing itself is not blocked.
+     *
+     * @return bool false
+     */
+    public function addDuplicateWarningToPublishForm($hookName, $args)
+    {
+        $form = is_array($args) ? ($args[0] ?? null) : $args;
+        if (!is_object($form) || empty($form->id) || $form->id !== 'publish') {
+            return false;
+        }
+        if (empty($form->publication) || !empty($form->errors)) {
+            return false; // requirements not met: nothing will be published yet
+        }
+        $context = $this->_resolveContext();
+        if (!$context) {
+            return false;
+        }
+        $dup = $this->_publishDuplicate($context->getId(), $form->publication);
+        if (!$dup) {
+            return false;
+        }
+        $form->addField(new FieldHTML('articleNumberDuplicate', [
+            'description' => '<p><strong>' . __('plugins.generic.articleNumber.duplicate.publishForm', array(
+                'value' => htmlspecialchars($dup['value']),
+                'otherId' => $dup['otherId'],
+            )) . '</strong></p>',
+            'groupId' => 'default',
+        ]));
+        return false;
+    }
+
+    /**
+     * The clash that keeps (or kept) this publication from getting its number at
+     * publication: its Article Number is empty, its Pages value looks like an
+     * article number, and another article already uses that value (within the
+     * journal's uniqueness scope). Null when nothing is in the way.
+     *
+     * @param int    $contextId
+     * @param object $publication
+     * @return array|null {value:string, otherId:int}
+     */
+    private function _publishDuplicate($contextId, $publication)
+    {
+        if (!$this->isFeatureEnabled($contextId) || $this->getSetting($contextId, self::SETTING_NO_DERIVE_ON_PUBLISH)) {
+            return null;
+        }
+        if (trim((string) $publication->getData(self::PROP_WORK_NUMBER)) !== '') {
+            return null;
+        }
+        $service = $this->getService();
+        $derived = $service->deriveOnPublish(
+            $contextId,
+            (int) $publication->getData('submissionId'),
+            $publication->getData('pages'),
+            $publication->getData('issueId')
+        );
+        if (!$derived || !$derived['duplicateOf']) {
+            return null;
+        }
+        return array('value' => $derived['value'], 'otherId' => $service->submissionIdOf($derived['duplicateOf']));
+    }
+
+    /**
+     * Warn the person who is publishing that no number was written. OJS shows it
+     * as a notice on the next screen that loads notifications; a scheduled task
+     * has no user, and the Scan lists the article either way.
+     *
+     * @param int    $submissionId
+     * @param string $value
+     * @param int    $otherId
+     */
+    private function _notifyDuplicate($submissionId, $value, $otherId)
+    {
+        try {
+            $request = Application::get()->getRequest();
+            $user = $request ? $request->getUser() : null;
+            if (!$user) {
+                return;
+            }
+            $notificationManager = new NotificationManager();
+            $notificationManager->createTrivialNotification($user->getId(), \APP\notification\Notification::NOTIFICATION_TYPE_WARNING, array(
+                'contents' => __('plugins.generic.articleNumber.duplicate.notice', array(
+                    'submissionId' => (int) $submissionId,
+                    'value' => htmlspecialchars($value),
+                    'otherId' => (int) $otherId,
+                )),
+            ));
+        } catch (\Throwable $e) {
+            // A notice must never stop a publication.
+            error_log('articleNumber: could not create the duplicate notice: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * The first number from $next on that no other article uses, so the generator
+     * never suggests a value that saving would reject. Null when none is found.
+     *
+     * @return string|null
+     */
+    private function _freeSuggestion($contextId, $publication, $template, $next)
+    {
+        $scope = $this->getUniquenessScope($contextId);
+        $suggestion = $this->_formatTemplate($template, $next);
+        for ($tries = 0; $tries < 5000; $tries++) {
+            if (!$this->isWorkNumberTaken($contextId, $suggestion, (int) $publication->getData('submissionId'), $scope, $publication->getData('issueId'))) {
+                return $suggestion;
+            }
+            $following = $this->_formatTemplate($template, ++$next);
+            if ($following === $suggestion) {
+                break; // a template without a counter cannot offer another value
+            }
+            $suggestion = $following;
+        }
+        return null;
     }
 
     /**
@@ -380,13 +611,13 @@ class ArticleNumberPlugin extends GenericPlugin
         if (empty($pubIds)) {
             return 1;
         }
-        $dao = DAORegistry::getDAO('PublicationDAO');
-        $in = implode(',', array_map('intval', $pubIds));
         $max = 0;
-        foreach ($dao->retrieve(
-            "SELECT setting_value FROM publication_settings WHERE setting_name = '" . self::PROP_WORK_NUMBER . "' AND publication_id IN ($in)"
-        ) as $row) {
-            $n = $this->_extractTrailingInt($row->setting_value);
+        $values = DB::table('publication_settings')
+            ->where('setting_name', self::PROP_WORK_NUMBER)
+            ->whereIn('publication_id', array_map('intval', $pubIds))
+            ->pluck('setting_value');
+        foreach ($values as $value) {
+            $n = $this->_extractTrailingInt($value);
             if ($n !== null && $n > $max) {
                 $max = $n;
             }
@@ -396,22 +627,14 @@ class ArticleNumberPlugin extends GenericPlugin
 
     /**
      * All publication ids assigned to a given issue (issueId is a publication
-     * setting in OJS 3.3).
+     * setting in OJS 3.4, a column in OJS 3.5).
      *
      * @param int $issueId
      * @return int[]
      */
     private function _issuePublicationIds($issueId)
     {
-        $dao = DAORegistry::getDAO('PublicationDAO');
-        $ids = array();
-        foreach ($dao->retrieve(
-            'SELECT publication_id FROM publication_settings WHERE setting_name = ? AND setting_value = ? AND locale = ?',
-            array('issueId', (string) $issueId, '')
-        ) as $row) {
-            $ids[] = (int) $row->publication_id;
-        }
-        return $ids;
+        return $this->getService()->getIssuePublicationIds($issueId);
     }
 
     /**
@@ -446,6 +669,179 @@ class ArticleNumberPlugin extends GenericPlugin
         return $out;
     }
 
+    /** @var array publication id => number derived at publication, awaiting the saved-check */
+    private $pendingDerived = array();
+
+    /**
+     * Hook callback for `Publication::publish` (after the save): mark the number as
+     * derived by this plugin (so Undo can remove it) only if it was really saved.
+     *
+     * @param string $hookName
+     * @param array  $args [0]=>&$newPublication
+     * @return bool false
+     */
+    public function markDerivedOnPublish($hookName, $args)
+    {
+        $pub = $args[0];
+        $id = (int) $pub->getId();
+        if (isset($this->pendingDerived[$id])) {
+            if ((string) $pub->getData(self::PROP_WORK_NUMBER) === (string) $this->pendingDerived[$id]) {
+                $this->getService()->markDerived($id);
+            }
+            unset($this->pendingDerived[$id]);
+        }
+        return false;
+    }
+
+    /**
+     * Hook callback for `Publication::publish::before`: derive the Article Number
+     * from the Pages value at publication (or scheduling) time. Does nothing when
+     * the feature or this option is off, when a number is already set, or when the
+     * Pages value is a real page range or an unclear value.
+     *
+     * @param string $hookName
+     * @param array  $args [0]=>&$newPublication, [1]=>$publication
+     * @return bool false
+     */
+    public function deriveNumberOnPublish($hookName, $args)
+    {
+        $newPublication = $args[0];
+        $submission = Repo::submission()->get($newPublication->getData('submissionId'));
+        if (!$submission) {
+            return false;
+        }
+        $contextId = (int) $submission->getData('contextId');
+        if (!$this->isFeatureEnabled($contextId) || $this->getSetting($contextId, self::SETTING_NO_DERIVE_ON_PUBLISH)) {
+            return false;
+        }
+        $existing = $newPublication->getData(self::PROP_WORK_NUMBER);
+        if ($existing !== null && trim((string) $existing) !== '') {
+            return false; // never overwrite a number that is already there
+        }
+        $service = $this->getService();
+        $derived = $service->deriveOnPublish($contextId, (int) $submission->getId(), $newPublication->getData('pages'), $newPublication->getData('issueId'));
+        if ($derived === null) {
+            return false;
+        }
+        if ($derived['duplicateOf']) {
+            // Another article has this number: leave the field empty and say so.
+            $otherId = $service->submissionIdOf($derived['duplicateOf']);
+            error_log('articleNumber: no number written at publication for submission #' . $submission->getId() . ': "' . $derived['value'] . '" is already used by submission #' . $otherId);
+            $this->_notifyDuplicate((int) $submission->getId(), $derived['value'], $otherId);
+            return false;
+        }
+        $newPublication->setData(self::PROP_WORK_NUMBER, $derived['value']);
+        $this->pendingDerived[(int) $newPublication->getId()] = $derived['value'];
+        return false;
+    }
+
+    /**
+     * Is the plugin's own item in the article-details block hidden for this
+     * journal? The manager's saved choice wins; with no choice, the legacy hide
+     * flag wins; with neither, the block is hidden only when the active theme
+     * prints the Article Number itself.
+     *
+     * @param int $contextId
+     * @return bool
+     */
+    public function isDetailsBlockHidden($contextId)
+    {
+        $choice = $this->getSetting($contextId, self::SETTING_DETAILS_CHOICE);
+        if ($choice === 'hide') {
+            return true;
+        }
+        if ($choice === 'show') {
+            return false;
+        }
+        if ($this->getSetting($contextId, self::SETTING_HIDE_DETAILS_BLOCK)) {
+            return true;
+        }
+        return $this->themeShowsArticleNumber($contextId);
+    }
+
+    /**
+     * Does the journal's active theme print the Article Number itself?
+     *
+     * 1. A theme (or a parent theme) with rendersArticleNumber() is believed,
+     *    whether it answers yes or no.
+     * 2. Otherwise the theme counts when it is named in THEMES_SHOWING_NUMBER.
+     *
+     * @param int $contextId
+     * @return bool
+     */
+    public function themeShowsArticleNumber($contextId)
+    {
+        static $cache = array();
+        $contextId = (int) $contextId;
+        if (isset($cache[$contextId])) {
+            return $cache[$contextId];
+        }
+        $path = null;
+        $chain = array();
+        try {
+            $request = Application::get()->getRequest();
+            $context = ($request->getContext() && (int) $request->getContext()->getId() === $contextId)
+                ? $request->getContext()
+                : Application::getContextDAO()->getById($contextId);
+            $path = $context ? $context->getData('themePluginPath') : null;
+            if (!$path && $request->getSite()) {
+                $path = $request->getSite()->getData('themePluginPath');
+            }
+            if ($path) {
+                $theme = $this->_themeInDirectory($path, $contextId);
+                for ($guard = 0; $theme && $guard < 10; $guard++) {
+                    $chain[] = $theme;
+                    $theme = $theme->parent ?? null;
+                }
+            }
+            foreach ($chain as $theme) {
+                if (method_exists($theme, 'rendersArticleNumber')) {
+                    return $cache[$contextId] = (bool) $theme->rendersArticleNumber();
+                }
+            }
+        } catch (\Throwable $e) {
+            // Detection must never break a page; the list below still applies.
+            error_log('articleNumber: theme detection failed: ' . $e->getMessage());
+        }
+        $names = $path ? array((string) $path) : array();
+        foreach ($chain as $theme) {
+            $names[] = (string) $theme->getDirName();
+        }
+        foreach ($names as $name) {
+            if (in_array(strtolower($name), self::THEMES_SHOWING_NUMBER, true)) {
+                return $cache[$contextId] = true;
+            }
+        }
+        return $cache[$contextId] = false;
+    }
+
+    /**
+     * The registered theme plugin object living in a theme directory, loading it
+     * first when this request has not loaded it (theme objects are not loaded on
+     * every page, e.g. in the back end). Themes are registered under their class
+     * name, not their directory, and loadPlugin() hands back a never-registered
+     * copy of an already loaded theme, so the registry is searched by directory.
+     *
+     * @return object|null
+     */
+    private function _themeInDirectory($directory, $contextId)
+    {
+        $find = function () use ($directory) {
+            foreach ((array) PluginRegistry::getPlugins('themes') as $theme) {
+                if ($theme->getDirName() === $directory) {
+                    return $theme;
+                }
+            }
+            return null;
+        };
+        $theme = $find();
+        if (!$theme) {
+            PluginRegistry::loadPlugin('themes', $directory, $contextId);
+            $theme = $find();
+        }
+        return $theme;
+    }
+
     /**
      * Hook callback for `Templates::Article::Details`.
      *
@@ -470,7 +866,7 @@ class ArticleNumberPlugin extends GenericPlugin
         // Per-journal opt-out: a theme that renders the Article Number itself
         // sets the truthy "hide" flag to suppress this plugin's own item and
         // avoid a duplicate. Default (unset) shows it.
-        if ($this->getSetting($context->getId(), self::SETTING_HIDE_DETAILS_BLOCK)) {
+        if ($this->isDetailsBlockHidden($context->getId())) {
             return false;
         }
 
@@ -530,61 +926,47 @@ class ArticleNumberPlugin extends GenericPlugin
     }
 
     /**
-     * Hook callback for `quicksubmitform::display`. Marks that the QuickSubmit
-     * form is rendering, so the shared AdditionalMetadata hook only injects our
-     * field here (and not in the normal submission wizard). Returns false so the
-     * form renders normally.
+     * Hook callback for `quicksubmitform::display`.
+     *
+     * Adds the "Article Number" field to the QuickSubmit form when the feature is
+     * enabled for the journal. The QuickSubmit template prints the
+     * `additionalContributorsFields` variable below its contributors grid, so the
+     * rendered field is appended to that variable (anything another plugin put
+     * there is kept). The value comes from the submitted form data (so it
+     * survives a validation re-display) or, failing that, from the stored value.
      *
      * @param string $hookName
-     * @param array  $args
-     * @return bool false
-     */
-    public function markQuickSubmitContext($hookName, $args)
-    {
-        self::$inQuickSubmit = true;
-        return false;
-    }
-
-    /**
-     * Hook callback for `Templates::Submission::SubmissionMetadataForm::AdditionalMetadata`.
-     *
-     * Injects the "Article Number" field into the submission-metadata section,
-     * but ONLY while QuickSubmit is rendering and the feature is enabled for the
-     * journal. Value comes from the form's submitted data (so it survives a
-     * validation re-display) or, failing that, the publication's stored value.
-     *
-     * @param string $hookName
-     * @param array  $args [0]=>&$params, [1]=>$smarty, [2]=>&$output
+     * @param array  $args [0]=>$form, [1]=>&$returner
      * @return bool false
      */
     public function displayQuickSubmitWorkNumber($hookName, $args)
     {
-        if (!self::$inQuickSubmit) {
-            return false; // normal submission wizard — leave it to the IssueEntry field
+        $form = $args[0] ?? null;
+        if (!is_object($form) || !method_exists($form, 'getData')) {
+            return false;
         }
-        $context = $this->_resolveContext();
+        $request = Application::get()->getRequest();
+        $context = $request ? $request->getContext() : null;
         if (!$context || !$this->isFeatureEnabled($context->getId())) {
             return false;
         }
 
-        $smarty = $args[1];
-        $output =& $args[2];
-
-        // Prefill: submitted form value first (survives validation errors), then
-        // the publication's stored value.
-        $value = $smarty->getTemplateVars(self::PROP_WORK_NUMBER);
+        $value = $form->getData(self::PROP_WORK_NUMBER);
         if ($value === null || $value === '') {
-            $publicationId = $smarty->getTemplateVars('publicationId');
-            if ($publicationId) {
-                $publication = \Services::get('publication')->get((int) $publicationId);
-                if ($publication) {
-                    $value = $publication->getData(self::PROP_WORK_NUMBER);
-                }
-            }
+            $submissionId = $form->getData('submissionId');
+            $submission = $submissionId ? Repo::submission()->get((int) $submissionId) : null;
+            $publication = $submission ? $submission->getCurrentPublication() : null;
+            $value = $publication ? $publication->getData(self::PROP_WORK_NUMBER) : null;
         }
 
-        $smarty->assign('articleNumberQsValue', ($value === null) ? '' : $value);
-        $output .= $smarty->fetch($this->getTemplateResource('quickSubmitField.tpl'));
+        $templateMgr = TemplateManager::getManager($request);
+        // The Form Builder helpers need to know the form before it is displayed.
+        $templateMgr->getFBV()->setForm($form);
+        $templateMgr->assign('articleNumberQsValue', ($value === null) ? '' : (string) $value);
+        $html = $templateMgr->fetch($this->getTemplateResource('quickSubmitField.tpl'));
+
+        $existing = $templateMgr->getTemplateVars('additionalContributorsFields');
+        $templateMgr->assign('additionalContributorsFields', (is_string($existing) ? $existing : '') . $html);
 
         return false;
     }
@@ -635,7 +1017,7 @@ class ArticleNumberPlugin extends GenericPlugin
         if (!$submissionId) {
             return false;
         }
-        $submission = \Services::get('submission')->get((int) $submissionId);
+        $submission = Repo::submission()->get((int) $submissionId);
         if (!$submission) {
             return false;
         }
@@ -646,22 +1028,15 @@ class ArticleNumberPlugin extends GenericPlugin
 
         // Write ONLY our workNumber setting directly (never touch pages or other
         // core fields). Mirrors the migration tool's direct-write approach.
-        $dao = DAORegistry::getDAO('PublicationDAO');
         $pubId = (int) $publication->getId();
         $raw = $form->getData(self::PROP_WORK_NUMBER);
         $workNumber = ($raw === null) ? '' : trim((string) $raw);
+        $key = ['publication_id' => $pubId, 'locale' => '', 'setting_name' => self::PROP_WORK_NUMBER];
 
         if ($workNumber === '') {
-            $dao->update(
-                'DELETE FROM publication_settings WHERE publication_id = ? AND setting_name = ? AND locale = ?',
-                array($pubId, self::PROP_WORK_NUMBER, '')
-            );
+            DB::table('publication_settings')->where($key)->delete();
         } else {
-            $dao->update(
-                'INSERT INTO publication_settings (publication_id, locale, setting_name, setting_value) VALUES (?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)',
-                array($pubId, '', self::PROP_WORK_NUMBER, $workNumber)
-            );
+            DB::table('publication_settings')->updateOrInsert($key, ['setting_value' => $workNumber]);
         }
 
         return false;
@@ -730,8 +1105,8 @@ class ArticleNumberPlugin extends GenericPlugin
      * the 4th hook argument (it can be an older version), else the current one.
      *
      * @param array $args Hook arguments
-     * @param Submission $submission
-     * @return Publication|null
+     * @param \APP\submission\Submission $submission
+     * @return \APP\publication\Publication|null
      */
     private function _viewedPublication($args, $submission)
     {
@@ -742,7 +1117,7 @@ class ArticleNumberPlugin extends GenericPlugin
     }
 
     /**
-     * Hook callback for `ArticleHandler::view` (registered at HOOK_SEQUENCE_LATE).
+     * Hook callback for `ArticleHandler::view` (registered at Hook::SEQUENCE_LATE).
      *
      * Google Scholar matches a citation to a paper by journal, volume/issue and
      * the number of the first page. Scholar has no separate tag for an article
@@ -797,6 +1172,7 @@ class ArticleNumberPlugin extends GenericPlugin
         $templateMgr = TemplateManager::getManager($request);
         $templateMgr->addHeader(
             'googleScholarStartPage',
+            // This replaces the Google Scholar plugin's own header slot (no second tag). tara-yoksay: S02
             '<meta name="citation_firstpage" content="' . htmlspecialchars((string) $workNumber, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"/>'
         );
         $templateMgr->addHeader('googleScholarEndPage', '');
@@ -822,11 +1198,9 @@ class ArticleNumberPlugin extends GenericPlugin
     public function injectCrossrefArticleNumber($hookName, $args)
     {
         $doc =& $args[0];
-        if (!($doc instanceof DOMDocument)) {
+        if (!($doc instanceof \DOMDocument)) {
             return false;
         }
-
-        $submissionService = \Services::get('submission');
 
         // Snapshot the node list first: we mutate the tree while iterating.
         $articleNodes = array();
@@ -839,8 +1213,8 @@ class ArticleNumberPlugin extends GenericPlugin
             // URL. We gate on the SUBMISSION's own journal (not the request
             // context), so this works for both web and CLI export and is correct
             // even if a single export ever mixed journals.
-            $submission = $this->_resolveSubmissionForArticleNode($articleNode, $submissionService);
-            if (!$submission || !$this->isFeatureEnabled($submission->getContextId())) {
+            $submission = $this->_resolveSubmissionForArticleNode($articleNode);
+            if (!$submission || !$this->isFeatureEnabled((int) $submission->getData('contextId'))) {
                 continue;
             }
             $publication = $submission->getCurrentPublication();
@@ -885,11 +1259,10 @@ class ArticleNumberPlugin extends GenericPlugin
      * <doi_data>/<resource> article URL (…/{contextPath}/article/view/{bestId}).
      * Request-context independent, so it works under web and CLI export alike.
      *
-     * @param DOMElement $articleNode
-     * @param mixed      $submissionService
-     * @return Submission|null
+     * @param \DOMElement $articleNode
+     * @return \APP\submission\Submission|null
      */
-    private function _resolveSubmissionForArticleNode($articleNode, $submissionService)
+    private function _resolveSubmissionForArticleNode($articleNode)
     {
         $doiData = $this->_firstChildByLocalName($articleNode, 'doi_data');
         if (!$doiData) {
@@ -907,14 +1280,14 @@ class ArticleNumberPlugin extends GenericPlugin
         $bestId = urldecode($m[2]);
 
         if (ctype_digit($bestId)) {
-            return $submissionService->get((int) $bestId);
+            return Repo::submission()->get((int) $bestId);
         }
         // Non-numeric best id is a urlPath, which requires the journal id.
         $context = Application::getContextDAO()->getByPath($contextPath);
         if (!$context) {
             return null;
         }
-        return $submissionService->getByUrlPath($bestId, $context->getId());
+        return Repo::submission()->getByUrlPath($bestId, (int) $context->getId());
     }
 
     /**
@@ -932,7 +1305,7 @@ class ArticleNumberPlugin extends GenericPlugin
     {
         $record = isset($args[1]) ? $args[1] : null;
         $doc =& $args[3];
-        if (!($doc instanceof DOMDocument) || !is_object($record)) {
+        if (!($doc instanceof \DOMDocument) || !is_object($record)) {
             return false;
         }
 
@@ -941,7 +1314,7 @@ class ArticleNumberPlugin extends GenericPlugin
             return false;
         }
         // Gate on the article's own journal (request-context independent).
-        $contextId = method_exists($article, 'getContextId') ? $article->getContextId() : null;
+        $contextId = (int) $article->getData('contextId');
         if (!$contextId || !$this->isFeatureEnabled($contextId)) {
             return false;
         }
@@ -1164,42 +1537,38 @@ class ArticleNumberPlugin extends GenericPlugin
      * Enforces immutability of the authoritative coordinate (Principle #6):
      * once a publication is published, its Article Number cannot be changed (or
      * set for the first time) through the editor UI. The sanctioned path for
-     * back-filling published articles is the migration tool (Phase 6), which
+     * back-filling published articles is the migration tool, which
      * writes directly rather than through this validated edit flow.
      *
      * @param string $hookName
-     * @param array  $args [0]=>&$errors, [1]=>$action, [2]=>$props, ...
+     * @param array  $args [0]=>&$errors, [1]=>?Publication (null when adding), [2]=>$props, ...
      * @return bool false
      */
     public function validateWorkNumberImmutability($hookName, $args)
     {
         $errors =& $args[0];
-        $action = $args[1];
+        $publication = $args[1];
         $props = $args[2];
 
         // Only act when the workNumber is part of this edit.
         if (!is_array($props) || !array_key_exists(self::PROP_WORK_NUMBER, $props)) {
             return false;
         }
-        // Immutability only applies to edits of an existing publication.
-        if ($action !== VALIDATE_ACTION_EDIT || empty($props['id'])) {
-            return false;
-        }
-
-        $publication = \Services::get('publication')->get((int) $props['id']);
-        if (!$publication) {
+        // Immutability only applies to edits of an existing publication
+        // (OJS passes null as the publication when a new one is being added).
+        if (!is_object($publication)) {
             return false;
         }
 
         // Gate on the per-journal opt-in for this publication's journal.
-        $submission = \Services::get('submission')->get($publication->getData('submissionId'));
+        $submission = Repo::submission()->get((int) $publication->getData('submissionId'));
         $contextId = $submission ? $submission->getData('contextId') : null;
         if (!$contextId || !$this->isFeatureEnabled($contextId)) {
             return false;
         }
 
         // Block any change to the Article Number on an already-published article.
-        if ((int) $publication->getData('status') === STATUS_PUBLISHED) {
+        if ((int) $publication->getData('status') === PKPSubmission::STATUS_PUBLISHED) {
             $old = (string) $publication->getData(self::PROP_WORK_NUMBER);
             $new = (string) $props[self::PROP_WORK_NUMBER];
             if ($old !== $new) {
@@ -1221,6 +1590,20 @@ class ArticleNumberPlugin extends GenericPlugin
     public function getUniquenessScope($contextId)
     {
         return $this->getService()->getUniquenessScope($contextId);
+    }
+
+    /**
+     * Duplicate-number message that matches the journal's uniqueness scope
+     * ("in this journal" or, when uniqueness is per issue, "in this issue").
+     *
+     * @param int $contextId
+     * @return string
+     */
+    private function _uniquenessErrorMessage($contextId)
+    {
+        return ($this->getUniquenessScope($contextId) === 'issue')
+            ? __('plugins.generic.articleNumber.uniqueness.error.issue')
+            : __('plugins.generic.articleNumber.uniqueness.error');
     }
 
     /**
@@ -1249,12 +1632,13 @@ class ArticleNumberPlugin extends GenericPlugin
      * to it here.
      *
      * @param string $hookName
-     * @param array  $args [0]=>&$errors, [1]=>$action, [2]=>$props, ...
+     * @param array  $args [0]=>&$errors, [1]=>?Publication (null when adding), [2]=>$props, ...
      * @return bool false
      */
     public function validateWorkNumberUniqueness($hookName, $args)
     {
         $errors =& $args[0];
+        $publication = $args[1];
         $props = $args[2];
 
         if (!is_array($props) || !array_key_exists(self::PROP_WORK_NUMBER, $props)) {
@@ -1270,11 +1654,7 @@ class ArticleNumberPlugin extends GenericPlugin
         $submissionId = null;
         $issueId = isset($props['issueId']) ? $props['issueId'] : null;
         $status = null;
-        if (!empty($props['id'])) {
-            $publication = \Services::get('publication')->get((int) $props['id']);
-            if (!$publication) {
-                return false;
-            }
+        if (is_object($publication)) {
             $submissionId = $publication->getData('submissionId');
             if ($issueId === null) {
                 $issueId = $publication->getData('issueId');
@@ -1287,19 +1667,19 @@ class ArticleNumberPlugin extends GenericPlugin
             return false;
         }
 
-        $submission = \Services::get('submission')->get((int) $submissionId);
+        $submission = Repo::submission()->get((int) $submissionId);
         $contextId = $submission ? $submission->getData('contextId') : null;
         if (!$contextId || !$this->isFeatureEnabled($contextId)) {
             return false;
         }
         // Published is the immutability validator's job; uniqueness guards the
         // not-yet-published assignment.
-        if ($status !== null && (int) $status === STATUS_PUBLISHED) {
+        if ($status !== null && (int) $status === PKPSubmission::STATUS_PUBLISHED) {
             return false;
         }
 
         if ($this->isWorkNumberTaken($contextId, $value, (int) $submissionId, $this->getUniquenessScope($contextId), $issueId)) {
-            $errors[self::PROP_WORK_NUMBER] = array(__('plugins.generic.articleNumber.uniqueness.error'));
+            $errors[self::PROP_WORK_NUMBER] = array($this->_uniquenessErrorMessage($contextId));
         }
         return false;
     }
@@ -1336,7 +1716,7 @@ class ArticleNumberPlugin extends GenericPlugin
 
         if ($this->isWorkNumberTaken($context->getId(), $value, (int) $submissionId, $this->getUniquenessScope($context->getId()), $issueId ?: null)) {
             if (method_exists($form, 'addError')) {
-                $form->addError(self::PROP_WORK_NUMBER, __('plugins.generic.articleNumber.uniqueness.error'));
+                $form->addError(self::PROP_WORK_NUMBER, $this->_uniquenessErrorMessage($context->getId()));
             }
             if (method_exists($form, 'addErrorField')) {
                 $form->addErrorField(self::PROP_WORK_NUMBER);
@@ -1356,7 +1736,6 @@ class ArticleNumberPlugin extends GenericPlugin
             return $actions;
         }
 
-        import('lib.pkp.classes.linkAction.request.AjaxModal');
         $router = $request->getRouter();
         $settingsAction = new LinkAction(
             'settings',
@@ -1385,17 +1764,13 @@ class ArticleNumberPlugin extends GenericPlugin
         $verb = $request->getUserVar('verb');
         switch ($verb) {
             case 'settings':
-                AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON, LOCALE_COMPONENT_PKP_MANAGER);
-
                 $context = $request->getContext();
-                $this->import('ArticleNumberSettingsForm');
-                $form = new ArticleNumberSettingsForm($this, $context ? $context->getId() : CONTEXT_ID_NONE);
+                $form = new ArticleNumberSettingsForm($this, $context ? $context->getId() : $this->_siteContextId());
 
                 if ($request->getUserVar('save')) {
                     $form->readInputData();
                     if ($form->validate()) {
                         $form->execute();
-                        import('classes.notification.NotificationManager');
                         $notificationManager = new NotificationManager();
                         $notificationManager->createTrivialNotification($request->getUser()->getId());
                         return new JSONMessage(true);
@@ -1405,12 +1780,89 @@ class ArticleNumberPlugin extends GenericPlugin
                 }
                 return new JSONMessage(true, $form->fetch($request));
 
+            case 'migrateCsv':
             case 'migrateScan':
             case 'migrateApply':
             case 'migrateRollback':
                 return $this->handleMigrationVerb($verb, $request);
         }
         return parent::manage($args, $request);
+    }
+
+    /**
+     * The settings window shows at most ArticleNumberService::SAMPLE_LIMIT example
+     * lines per list; the command line prints every line.
+     *
+     * @param array $samples
+     * @return array
+     */
+    private function _panelSamples($samples)
+    {
+        foreach ($samples as $key => $lines) {
+            $samples[$key] = array_slice($lines, 0, ArticleNumberService::SAMPLE_LIMIT);
+        }
+        return $samples;
+    }
+
+    /**
+     * Send the full scan result as a CSV download (one row per article: to convert,
+     * to check by hand, skipped, already numbered, no pages) and end the request.
+     * UTF-8 with a BOM so spreadsheets open accented text correctly; cells that
+     * could be read as a formula are neutralised.
+     *
+     * @param string $journalPath
+     * @param array  $records
+     */
+    private function _sendMigrationCsv($journalPath, $records)
+    {
+        $statusNames = array(1 => 'in progress', 3 => 'published', 4 => 'declined', 5 => 'scheduled');
+        $resultNames = array(
+            'convert' => 'to convert',
+            'check' => 'manual check',
+            'skip' => 'skipped: real page range',
+            'numbered' => 'skipped: already has an Article Number',
+            'nopages' => 'skipped: no pages value',
+            'unpublished' => 'skipped: not published (in progress or declined)',
+        );
+        $reasonNames = array(
+            'number' => 'bare number: could be a real single page',
+            'roman' => 'roman numeral or letters only',
+            'text' => 'text, not a number',
+            'mixed' => 'letters, digits and punctuation: not a recognised pattern',
+            'other' => 'not recognised',
+            'duplicate' => 'same number as another article: not converted',
+        );
+        $safe = function ($v) {
+            $v = (string) $v;
+            return ($v !== '' && strpos("=+-@\t\r", $v[0]) !== false) ? "'" . $v : $v;
+        };
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="article-number-scan-' . preg_replace('/[^A-Za-z0-9_-]/', '', $journalPath) . '-' . date('Ymd') . '.csv"');
+        header('Cache-Control: no-store');
+        $out = fopen('php://output', 'w');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, array('result', 'publication_id', 'submission_id', 'submission_status', 'issue', 'title', 'pages', 'article_number', 'duplicate', 'note'));
+        foreach ($records as $r) {
+            fputcsv($out, array(
+                $resultNames[$r['result']] ?? $r['result'],
+                $r['publicationId'],
+                $r['submissionId'],
+                $statusNames[$r['status']] ?? ('status ' . $r['status']),
+                $safe($r['issue']),
+                $safe($r['title']),
+                $safe($r['pages']),
+                $safe($r['articleNumber']),
+                $r['duplicate'] ? 'yes' : '',
+                ($r['reason'] !== '' ? ($reasonNames[$r['reason']] ?? $r['reason']) : '')
+                    . ($r['duplicateOf'] ? ' (submission #' . $r['duplicateOf'] . ')' : ''),
+            ));
+        }
+        fclose($out);
+        exit;
     }
 
     /**
@@ -1441,9 +1893,8 @@ class ArticleNumberPlugin extends GenericPlugin
         if (!$user) {
             return new JSONMessage(false, __('plugins.generic.articleNumber.migrate.error.unauthorized'));
         }
-        $roleDao = DAORegistry::getDAO('RoleDAO');
-        $isManager = $roleDao->userHasRole($context->getId(), $user->getId(), ROLE_ID_MANAGER);
-        $isAdmin = $roleDao->userHasRole(CONTEXT_ID_NONE, $user->getId(), ROLE_ID_SITE_ADMIN);
+        $isManager = $user->hasRole([Role::ROLE_ID_MANAGER], $context->getId());
+        $isAdmin = $user->hasRole([Role::ROLE_ID_SITE_ADMIN], $this->_siteContextId());
         if (!$isManager && !$isAdmin) {
             return new JSONMessage(false, __('plugins.generic.articleNumber.migrate.error.unauthorized'));
         }
@@ -1469,7 +1920,6 @@ class ArticleNumberPlugin extends GenericPlugin
      */
     private function handleMigrationVerb($verb, $request)
     {
-        AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON);
         $context = $request->getContext();
         $guard = $this->migrationGuard($request, $context);
         if ($guard !== true) {
@@ -1479,13 +1929,38 @@ class ArticleNumberPlugin extends GenericPlugin
         $service = $this->getService();
         $threshold = $this->getMigrationThreshold($cid);
 
+        if ($verb === 'migrateCsv') {
+            $res = $service->processJournal($cid, 'dry-run');
+            $this->_sendMigrationCsv($context->getPath(), $res['records']);
+            return new JSONMessage(false); // not reached: _sendMigrationCsv() ends the request
+        }
+
         if ($verb === 'migrateScan') {
             $res = $service->processJournal($cid, 'dry-run');
             $candidateCount = (int) $res['counts']['derive'];
+            // Every value that needs a manual check is listed in full (never capped).
+            $manualRows = array();
+            foreach ($res['records'] as $rec) {
+                if ($rec['result'] === 'check') {
+                    $manualRows[] = array(
+                        'id' => $rec['publicationId'],
+                        'issue' => $rec['issue'],
+                        'title' => $rec['title'],
+                        'pages' => $rec['pages'],
+                        'reason' => $rec['reason'],
+                        'other' => $rec['duplicateOf'],
+                    );
+                }
+            }
             return new JSONMessage(true, json_encode(array(
                 'mode' => 'scan',
                 'counts' => $res['counts'],
-                'samples' => $res['samples'],
+                'stats' => $res['stats'],
+                'manual' => $manualRows,
+                'csvUrl' => $request->getRouter()->url($request, null, null, 'manage', null, array(
+                    'verb' => 'migrateCsv', 'plugin' => $this->getName(), 'category' => 'generic',
+                )),
+                'samples' => $this->_panelSamples($res['samples']),
                 'candidateCount' => $candidateCount,
                 'threshold' => $threshold,
                 'applyAllowed' => ($candidateCount > 0 && $candidateCount < $threshold),
@@ -1502,7 +1977,7 @@ class ArticleNumberPlugin extends GenericPlugin
             return new JSONMessage(true, json_encode(array(
                 'mode' => 'rollback',
                 'removedCount' => (int) $res['counts']['changed'],
-                'samples' => $res['samples'],
+                'samples' => $this->_panelSamples($res['samples']),
             )));
         }
 
@@ -1532,7 +2007,7 @@ class ArticleNumberPlugin extends GenericPlugin
             'mode' => 'apply',
             'appliedCount' => (int) $res['counts']['changed'],
             'duplicateCount' => (int) $res['counts']['duplicate'],
-            'samples' => $res['samples'],
+            'samples' => $this->_panelSamples($res['samples']),
         )));
     }
 }

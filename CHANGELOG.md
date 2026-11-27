@@ -1,153 +1,30 @@
 # Changelog
 
-All notable changes to the **Article Number Plugin for OJS** are documented here.
-The format is based on [Keep a Changelog](https://keepachangelog.com/), and the
-project aims to follow [Semantic Versioning](https://semver.org/).
+All notable changes to the **Article Number Plugin for OJS** (OJS 3.4 and 3.5 package) are documented here.
 
-Target platform: **OJS 3.3.x** (PHP 7.4–8.1). OJS 3.4 and 3.5 have their own package (2.x).
+## [2.0.0.11] — 2026-11-27 — ojs3.4-3.5
 
-## [1.7.0.4] — 2026-11-23 — ojs3.3
+First release for OJS 3.4.0.x and 3.5.0.x. One package for both.
 
-### Changed
-- Google Scholar: nothing is added on version URLs (`article/view/ID/version/N`). OJS core adds no Scholar tags there, so the article number alone would have been a stray tag.
-- The Smarty `{article_number}` helper registration is guarded against a second registration.
-- README: Known limits now cover Native XML, DOAJ / PubMed / TR Dizin, OAI-PMH and themes that print the number themselves. Turkish README added.
+- Article Number field on the publication Issue form, kept separate from *Pages*. The same number cannot be saved on two articles; a published article's number is locked.
+- Shown on the article page and in the issue contents. On sites that use Atlas, Nivo, Axis or JournalPlus (or a theme that declares it) the article-page block starts off, because the theme already shows the number; anyone who wants it can turn it on, and a choice made in the settings window is kept. A theme that answers for itself (`rendersArticleNumber()`) is believed, yes or no, before the built-in list.
+- Google Scholar: the article number as `citation_firstpage`, no `citation_lastpage`.
+- Crossref `item_number`, JATS `elocation-id`, and the number in the citation.
+- Copy article numbers typed into *Pages* to the new field (settings window or command line), with undo. `pages` is never changed; Roman-numeral ranges are treated as real page ranges. The Scan lists every value that needs a manual check in full at the top, shows articles and publication versions as separate counts, and the full result can be downloaded as CSV. Only published and scheduled articles are converted; articles in progress or declined are skipped and reported as such. When an article is published or scheduled with no Article Number and its Pages value follows the same rule as the Scan, the number is filled in automatically (one setting, on by default; a number typed by hand is never replaced).
+- A number that another article already uses is never written, at publication or by the migration (within the uniqueness setting): a warning shows in the publish window and under the field, and the Scan lists the article for a manual check with the other submission's number.
+- English, Turkish, Spanish, Portuguese (Portugal, Brazil). In other interface languages the plugin's texts appear in English.
+- If this package is installed on OJS 3.3 by mistake, it stays inactive and the plugin list says which package to install; the site keeps working.
+- Known limits in the README.
 
-## [1.7.0.3] — 2026-11-22 — ojs3.3
+### Türkçe
+OJS 3.4.0.x ve 3.5.0.x için ilk sürüm; tek paket ikisinde de çalışır.
 
-### Changed
-- Google Scholar: for an article with a number, `citation_firstpage` carries the number and no `citation_lastpage` is sent. Articles without a number are unchanged.
-
-## [1.7.0.2] — 2026-11-20 — ojs3.3
-
-### Changed
-- The article number in the on-page citation is HTML-escaped, in every citation style.
-- Google Scholar tags follow the version of the article the reader is viewing.
-- `version.xml` declares the OJS 3.3.0.x compatibility.
-
-## [1.7.0.1] — 2026-10-08 — ojs3.3
-
-### Added
-- Spanish (es_ES) translation.
-
-## [1.7.0.0] — 2026-09-30 — ojs3.3
-
-### Changed
-- Adopted the standard product packaging scheme: four-part version numbering
-  (`1.7.0.0`), the `ojs3.3` line branch/tag naming (`ojs3.3-1.7.0.0`), and the
-  per-line Drive folder layout. No functional change — 1.7.0 and 1.7.0.0 are
-  the same plugin build.
-
-## [1.7.0] — 2026-07-08
-
-### Added
-- **Article Number in the issue table of contents.** The Article Number now
-  appears in each article's entry on the issue contents page, in the place a page
-  number normally occupies — so digital-first articles (with no page range) show
-  a locator in the listing instead of a blank. It works out of the box on themes
-  that use the standard article-summary template (e.g. the **default** and
-  **Manuscript** themes), via the `Templates::Issue::Issue::Article` hook; a theme
-  that renders its own article summary can place it with the `{article_number}`
-  helper.
-- Per-journal **"Show the Article Number in the issue table of contents"** toggle
-  (on by default; turn it off when the theme renders it there itself, to avoid a
-  duplicate).
-
-### Changed
-- On the article page, the Article Number item now appears **just after the
-  galley links and before the publication date** — a more natural place for a
-  locator — instead of at the very bottom of the details sidebar. Themes that
-  place the item themselves are unaffected.
-
-## [1.6.0] — 2026-07-07
-
-First public release. A digital-first **Article Number** (*elocation-id*) for
-OJS, stored separately from the page-range field and integrated end-to-end —
-editor entry, reader display, Crossref, JATS, Google Scholar, and citations —
-without ever touching core data or forking any export plugin.
-
-### Editing
-- "Article Number" field on the publication **Issue** form (after *Pages*) and in
-  the **QuickSubmit** import form, both gated by a per-journal opt-in.
-- **Uniqueness enforcement**: the same Article Number cannot be saved on two
-  articles in one journal; duplicates on an unpublished article are blocked on
-  save. Scope is configurable per journal — **journal-wide by default**
-  (the continuous-publishing / PLoS model) or per-issue.
-- Once an article is **published**, its Article Number is locked, so a deposited
-  coordinate cannot be silently changed.
-
-### Reader & metadata
-- Shows the Article Number on the article page (theme-independent; can be hidden
-  per journal when the active theme renders it itself).
-- **Google Scholar**: suppresses the fake `citation_firstpage`/`citation_lastpage`
-  pair when an Article Number is set.
-- **Crossref**: injects `<publisher_item><item_number item_number_type="article_number">`
-  and drops `<pages>`; validates against the official Crossref schema.
-- **JATS**: replaces `<fpage>/<lpage>` with `<elocation-id>` (JATS4R-safe).
-- **Citations**: style-aware mapping across the bundled CSL styles (e.g. APA
-  "Article e…"), with documented limits for styles that have no native article-
-  number slot. See the README.
-
-### Migration
-- Back-fill `workNumber` from page-field article numbers — from the **settings
-  panel** (Scan → Apply → Undo, this journal) or the **CLI tool** (any/all
-  journals). It is a derivation: `pages` is read-only in every mode, genuine page
-  ranges are never auto-candidates, and Undo removes only tool-derived values.
-- Large archives are routed to the CLI above a per-journal candidate threshold
-  (default 2000); panel Scan and Undo are never limited.
-
-### Tools & extensibility
-- Optional, default-off **generator** that suggests the next sequential number
-  (template-driven, per journal+issue) without ever constraining the field.
-- `{article_number}` Smarty helper for theme developers
-  (see [docs/THEME-INTEGRATION.md](docs/THEME-INTEGRATION.md)).
-
-### Architecture
-- Single OJS generic plugin: **zero core-file changes, no export-plugin forks**,
-  hook-based integration only. Data is stored under PKP's internal property name
-  `workNumber` for a zero-migration hand-off if OJS core ships the field natively.
-- All migration, classification, and uniqueness logic lives in one
-  `ArticleNumberService` (single source of truth).
-- English / Turkish locale parity throughout.
-- Passed an independent pre-release security and compatibility review with no
-  Critical/High findings (PHP 7.4 / 8.1 clean). Full test matrix in
-  [docs/QA-MATRIX.md](docs/QA-MATRIX.md); design rationale in
-  [docs/TECHNICAL-NARRATIVE.md](docs/TECHNICAL-NARRATIVE.md).
-
----
-
-## Development history (pre-release)
-
-Condensed record of the phased build that led to 1.6.0.
-
-### [1.5.0] — 2026-06-25 — Style-aware citations
-- Fixed MLA printing the Article Number twice; reworked the citation mapping to
-  be style-aware (native-`number` styles get `number` only, APA keeps its
-  "Article e…" label, the rest carry the value in the page slot so the locator is
-  never lost). No CSL file modified.
-
-### [1.4.0] — 2026-06-18 — Uniqueness enforcement
-- Added per-journal Article Number uniqueness (hard block on save for unpublished
-  articles; migration reports duplicates instead of blocking) with a journal-wide
-  / per-issue scope setting.
-
-### [1.3.0] — 2026-06-13 — QuickSubmit support
-- Added the Article Number field to the QuickSubmit form via hooks (no fork),
-  persisting `workNumber` before publish and for queued submissions.
-
-### [1.2.0] — 2026-06-08 — Details-block toggle
-- Added the per-journal "Show the Article Number in the article details block"
-  setting so themes that render it themselves don't show it twice.
-
-### [1.1.0] — 2026-06-03 — Theme integration
-- Added the `{article_number}` Smarty helper and the theme-developer guide.
-
-### [1.0.0] — 2026-06-01 — Feature-complete core (OJS 3.3)
-- Plugin skeleton; runtime `workNumber` schema injection persisted to
-  `publication_settings`; per-journal opt-in (default off) with graceful
-  hand-off if core ever provides the field.
-- Editor field with mutual-exclusion guidance and published-coordinate lock.
-- Frontend display + Google Scholar fix; Crossref injection (XSD-valid); JATS
-  `elocation-id` bridge; CSL citation mapping.
-- CLI migration tool (dry-run / apply / rollback; `pages` never written) and the
-  optional sequential-number generator.
+- Yayın Sayı sekmesinde Makale Numarası alanı, *Sayfalar*'dan ayrı. Aynı numara iki makalede kaydedilemez; yayımlanmış makalenin numarası kilitlidir.
+- Makale sayfasında ve sayı içindekilerde gösterilir. Atlas, Nivo, Axis ya da JournalPlus (veya bunu bildiren bir tema) kullanan sitelerde makale sayfasındaki blok kapalı başlar, çünkü tema numarayı zaten gösterir; isteyen açabilir, ayar penceresinde yapılan seçim korunur. Yanıtını kendisi veren tema (`rendersArticleNumber()`) evet de hayır da dese, yerleşik listeden önce ona uyulur.
+- Google Scholar: makale numarası `citation_firstpage` olarak gider, `citation_lastpage` gönderilmez.
+- Crossref `item_number`, JATS `elocation-id` ve atıfta numara.
+- *Sayfalar*'a yazılmış makale numaralarını yeni alana kopyalama (ayar penceresi ya da komut satırı), geri alma ile. `pages` hiç değişmez; Roma rakamlı aralıklar gerçek sayfa aralığı sayılır. Tarama, elle kontrol gerektiren her değeri en üstte tam liste olarak gösterir; makale ve yayın sürümü sayıları ayrı verilir; tam sonuç CSV olarak indirilebilir. Yalnız yayımlanmış ve zamanlanmış makaleler dönüştürülür; devam eden ya da reddedilenler atlanır ve öyle bildirilir. Makale Numarası olmadan yayımlanan ya da zamanlanan bir makalenin Sayfalar değeri Tarama ile aynı kurala uyuyorsa numara kendiliğinden yazılır (tek ayar, varsayılan açık; elle girilmiş numara hiçbir zaman ezilmez).
+- Başka bir makalenin kullandığı numara, yayımda da göçte de hiçbir zaman yazılmaz (benzersizlik ayarına göre): yayım penceresinde ve alanın altında uyarı çıkar, Tarama makaleyi öbür gönderinin numarasıyla elle kontrol listesine alır.
+- İngilizce, Türkçe, İspanyolca, Portekizce (Portekiz, Brezilya). Başka arayüz dillerinde eklenti metinleri İngilizce görünür.
+- Bu paket yanlışlıkla OJS 3.3'e kurulursa etkisiz kalır ve eklenti listesi hangi paketin kurulacağını söyler; site çalışmaya devam eder.
+- Bilinen sınırlar README'de.

@@ -1,17 +1,20 @@
 <?php
 /**
- * @file ArticleNumberSettingsForm.inc.php
+ * @file ArticleNumberSettingsForm.php
  *
  * Article Number Plugin for OJS — per-journal settings form.
  *
- * Phase 1 persists a single per-journal setting:
- *   - enableWorkNumber (bool) — master opt-in for the Article Number feature.
- *     Default OFF. When OFF, the plugin injects nothing and OJS is unchanged.
+ * The master setting is `enableWorkNumber` (bool): the opt-in for the Article
+ * Number feature. Default OFF. When OFF, the plugin injects nothing and OJS is
+ * unchanged.
  */
 
-import('lib.pkp.classes.form.Form');
-import('lib.pkp.classes.form.validation.FormValidatorPost');
-import('lib.pkp.classes.form.validation.FormValidatorCSRF');
+namespace APP\plugins\generic\articleNumber;
+
+use APP\template\TemplateManager;
+use PKP\form\Form;
+use PKP\form\validation\FormValidatorCSRF;
+use PKP\form\validation\FormValidatorPost;
 
 class ArticleNumberSettingsForm extends Form
 {
@@ -36,13 +39,16 @@ class ArticleNumberSettingsForm extends Form
         $this->setData('enableWorkNumber', (bool) $this->plugin->getSetting(
             $this->contextId, ArticleNumberPlugin::SETTING_ENABLE
         ));
-        // The form shows a "Show …" checkbox; internally we store the inverse
-        // "hide" flag (truthy = hide). Default = show.
-        $hide = $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_HIDE_DETAILS_BLOCK);
-        $this->setData('showArticleNumberInDetails', !$hide);
+        // The form shows a "Show …" checkbox. What it starts as: the manager's
+        // saved choice if there is one, otherwise off when the active theme prints
+        // the Article Number itself, otherwise on.
+        $this->setData('showArticleNumberInDetails', !$this->plugin->isDetailsBlockHidden($this->contextId));
+        $this->setData('themeShowsArticleNumber', $this->plugin->themeShowsArticleNumber($this->contextId));
         // Same inverted "hide" flag for the issue table-of-contents display.
         $hideToc = $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_HIDE_IN_TOC);
         $this->setData('showArticleNumberInToc', !$hideToc);
+        // Derive from Pages at publication: on unless the inverted flag is set.
+        $this->setData('deriveNumberOnPublish', !$this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_NO_DERIVE_ON_PUBLISH));
         $this->setData('workNumberGeneratorEnabled', (bool) $this->plugin->getSetting(
             $this->contextId, ArticleNumberPlugin::SETTING_GENERATOR
         ));
@@ -58,7 +64,7 @@ class ArticleNumberSettingsForm extends Form
 
     public function readInputData()
     {
-        $this->readUserVars(array('enableWorkNumber', 'showArticleNumberInDetails', 'showArticleNumberInToc', 'workNumberUniquenessScope', 'workNumberGeneratorEnabled', 'workNumberTemplate', 'workNumberMigrationThreshold'));
+        $this->readUserVars(array('enableWorkNumber', 'showArticleNumberInDetails', 'showArticleNumberInToc', 'deriveNumberOnPublish', 'workNumberUniquenessScope', 'workNumberGeneratorEnabled', 'workNumberTemplate', 'workNumberMigrationThreshold'));
 
         // Constrain scope to the allowed set; default to journal-wide.
         $scope = $this->getData('workNumberUniquenessScope');
@@ -92,12 +98,26 @@ class ArticleNumberSettingsForm extends Form
             (bool) $this->getData('enableWorkNumber'),
             'bool'
         );
-        // Store the inverse "hide" flag as a truthy int (1 = hide) so it reads
-        // back reliably; "show" stores 0 (which reads back as null = default show).
+        // Remember the manager's choice for the details block only when it is a
+        // real choice: one already made earlier, or one that differs from what the
+        // journal would get by default (the theme decides the default). Saving the
+        // form without touching the checkbox keeps following the theme.
+        $wantHidden = !$this->getData('showArticleNumberInDetails');
+        $hadChoice = $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_DETAILS_CHOICE) !== null;
+        $defaultHidden = (bool) $this->plugin->getSetting($this->contextId, ArticleNumberPlugin::SETTING_HIDE_DETAILS_BLOCK)
+            || $this->plugin->themeShowsArticleNumber($this->contextId);
+        if ($hadChoice || $wantHidden !== $defaultHidden) {
+            $this->plugin->updateSetting(
+                $this->contextId,
+                ArticleNumberPlugin::SETTING_DETAILS_CHOICE,
+                $wantHidden ? 'hide' : 'show',
+                'string'
+            );
+        }
         $this->plugin->updateSetting(
             $this->contextId,
-            ArticleNumberPlugin::SETTING_HIDE_DETAILS_BLOCK,
-            $this->getData('showArticleNumberInDetails') ? 0 : 1,
+            ArticleNumberPlugin::SETTING_NO_DERIVE_ON_PUBLISH,
+            $this->getData('deriveNumberOnPublish') ? 0 : 1,
             'int'
         );
         $this->plugin->updateSetting(

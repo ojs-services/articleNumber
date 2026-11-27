@@ -4,8 +4,8 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-26T00:00:00+00:00\n"
 "PO-Revision-Date: 2026-06-26T00:00:00+00:00\n"
-"Language-Team: tr_TR\n"
-"Language: tr_TR\n"
+"Language-Team: tr\n"
+"Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -16,7 +16,7 @@ msgid "plugins.generic.articleNumber.name"
 msgstr "Makale Numarası Eklentisi"
 
 msgid "plugins.generic.articleNumber.description"
-msgstr "Dijital-öncelikli dergiler için \"Makale Numarası\"nı (elocation-id), sayfa aralığı alanından ayrı bir metadata olarak yönetir — Crossref, JATS/PMC ve Google Scholar ile uyumlu ve gelecekte OJS çekirdeğine sıfır-taşımayla devredilebilecek şekilde PKP'nin çekirdek alan adıyla hizalıdır."
+msgstr "Dijital-öncelikli dergiler için \"Makale Numarası\"nı (elocation-id), sayfa aralığı alanından ayrı bir metadata olarak yönetir — Crossref, JATS/PMC ve Google Scholar ile uyumludur."
 
 # Settings ---------------------------------------------------------------
 
@@ -47,7 +47,7 @@ msgid "plugins.generic.articleNumber.field.label"
 msgstr "Makale Numarası"
 
 msgid "plugins.generic.articleNumber.field.description"
-msgstr "Bu makalenin dijital-öncelikli konum tanımlayıcısı (elocation-id) — ör. e0231470 veya P2.16. Bunu sayfa aralığı <strong>yerine</strong> kullanın: bir Makale Numarası girildiğinde yetkili koordinat o olur ve Sayfalar alanını boş bırakmalısınız. Sayfalar alanını yalnızca gerçek bir basılı sayfa aralığı olan makaleler için kullanın. İkisini birden asla doldurmayın: aksi hâlde Crossref, JATS/PMC ve Google Scholar'da bozuk metadata oluşur."
+msgstr "Bu makalenin dijital-öncelikli konum tanımlayıcısı (elocation-id) — ör. e0231470 veya P2.16. Bunu sayfa aralığı <strong>yerine</strong> kullanın: bir Makale Numarası girildiğinde yetkili koordinat o olur ve Sayfalar alanını boş bırakmalısınız. Sayfalar alanını yalnızca gerçek bir basılı sayfa aralığı olan makaleler için kullanın. İkisi de doluysa Crossref, JATS ve Google Scholar Makale Numarasını kullanır; DOAJ, PubMed ve diğer dışa aktarımlar Sayfalar alanını kullanır."
 
 msgid "plugins.generic.articleNumber.citation.articleLabel"
 msgstr "Makale"
@@ -69,9 +69,6 @@ msgstr "Önerilen numara için desen. Sıfır-dolgulu sayaç için {:04d} kullan
 msgid "plugins.generic.articleNumber.generator.suggested"
 msgstr "Önerilen sıradaki Makale Numarası: <strong>{$number}</strong> — kullanmak için yukarıdaki alana yazın."
 
-msgid "plugins.generic.articleNumber.generator.collision"
-msgstr "Uyarı: bu Makale Numarası, bu sayıdaki başka bir makale tarafından zaten kullanılıyor."
-
 # Uniqueness --------------------------------------------------------
 
 msgid "plugins.generic.articleNumber.settings.uniqueness"
@@ -88,6 +85,9 @@ msgstr "Bir Makale Numarasının tüm dergide mi (PLoS ve benzeri dergilerin kul
 
 msgid "plugins.generic.articleNumber.uniqueness.error"
 msgstr "Bu Makale Numarası bu dergide başka bir makalede zaten kullanılıyor. Her makalenin benzersiz bir Makale Numarası olmalıdır."
+
+msgid "plugins.generic.articleNumber.uniqueness.error.issue"
+msgstr "Bu Makale Numarası bu sayıdaki başka bir makalede zaten kullanılıyor. Bir sayıdaki her makalenin benzersiz bir Makale Numarası olmalıdır."
 
 # Migration ---------------------------------------------------------
 
@@ -174,3 +174,76 @@ msgstr "Önce bu dergi için Makale Numarası özelliğini etkinleştirin."
 
 msgid "plugins.generic.articleNumber.field.error.published"
 msgstr "Bu makale yayımlanmış durumda; bu yüzden Makale Numarası değiştirilemez — yayımlanmış koordinat kalıcıdır ve değiştirilmesi atıf ve indeksleme eşleşmelerini bozar. Yayımlanmış makalelere sonradan Makale Numarası eklemek için eklentinin geçiş (migration) aracını kullanın."
+
+msgid "plugins.generic.articleNumber.migrate.scan.articles"
+msgstr "Bu dergide %a% makale var: %p% yayımlanmış ya da zamanlanmış, %o% devam eden ya da reddedilmiş."
+
+msgid "plugins.generic.articleNumber.migrate.scan.versions"
+msgstr "Toplamda %v% yayın sürümü var. Yalnız her makalenin güncel sürümü dönüştürülür; önceki sürümlere dokunulmaz."
+
+msgid "plugins.generic.articleNumber.migrate.manual.title"
+msgstr "%m% değer elle kontrol gerektiriyor. Bunlar DÖNÜŞTÜRÜLMEYECEK:"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.id"
+msgstr "Yayın no"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.issue"
+msgstr "Sayı"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.title"
+msgstr "Makale başlığı"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.pages"
+msgstr "Sayfalar değeri"
+
+msgid "plugins.generic.articleNumber.migrate.manual.col.reason"
+msgstr "Neden kontrol gerekiyor"
+
+msgid "plugins.generic.articleNumber.migrate.reason.number"
+msgstr "Yalın bir sayı: gerçek bir tek sayfa olabilir"
+
+msgid "plugins.generic.articleNumber.migrate.reason.roman"
+msgstr "Yalnız Roma rakamı ya da harf: ön sayfa olabilir"
+
+msgid "plugins.generic.articleNumber.migrate.reason.text"
+msgstr "Metin, sayı değil"
+
+msgid "plugins.generic.articleNumber.migrate.reason.mixed"
+msgstr "Araç tarafından tanınmayan bir harf, rakam ve noktalama düzeni"
+
+msgid "plugins.generic.articleNumber.migrate.reason.other"
+msgstr "Tanınan bir düzen değil"
+
+msgid "plugins.generic.articleNumber.migrate.csv"
+msgstr "Tam sonucu indir (CSV)"
+
+msgid "plugins.generic.articleNumber.migrate.csv.hint"
+msgstr "Makale başına bir satır: dönüştürülecek, elle bakılacak, atlanan ve zaten numarası olan."
+
+msgid "plugins.generic.articleNumber.settings.showInDetails.themeNote"
+msgstr "Etkin temanız Makale Numarasını zaten kendisi gösteriyor; bu yüzden bu seçenek varsayılan olarak kapalıdır. Eklentinin kendi öğesini de istiyorsanız açın."
+
+msgid "plugins.generic.articleNumber.settings.deriveOnPublish"
+msgstr "Makale yayımlanırken numarayı sayfa değerinden türet"
+
+msgid "plugins.generic.articleNumber.settings.deriveOnPublish.description"
+msgstr "Bir makale Makale Numarası olmadan yayımlandığında ya da zamanlandığında ve Sayfalar değeri bir makale numarasına benziyorsa (örneğin e0231470), bu değer Makale Numarası alanına kopyalanır. Gerçek sayfa aralıklarına ve belirsiz değerlere dokunulmaz, elle girilmiş numara hiçbir zaman ezilmez ve Sayfalar alanı değişmez. Başka bir makalenin kullandığı numara yazılmaz: yayım penceresinde ve Makale Numarası alanının altında uyarılırsınız, Tarama da onu elle kontrol listesine alır."
+
+msgid "plugins.generic.articleNumber.migrate.scan.unpublished"
+msgstr "%u% makale yayımlanmamış (devam eden ya da reddedilmiş) olduğu için atlandı. Makale yayımlandığında Sayfalar değeri başka makalenin kullanmadığı bir makale numarasına benziyorsa numara kendiliğinden yazılır; değilse numarayı yayımdan önce Sayı formuna yazın."
+
+# A number another article already uses is never written ------------
+msgid "plugins.generic.articleNumber.duplicate.publishForm"
+msgstr "Makale Numarası yazılmayacak: Sayfalar alanındaki “{$value}” değerini #{$otherId} numaralı gönderi zaten kullanıyor. Yine de yayımlayabilirsiniz. Bu makaleye numara vermek için bu pencereyi kapatın, farklı bir Makale Numarası yazın, ardından yayımlayın."
+
+msgid "plugins.generic.articleNumber.duplicate.notice"
+msgstr "#{$submissionId} numaralı gönderiye Makale Numarası yazılmadı: Sayfalar alanındaki “{$value}” değerini #{$otherId} numaralı gönderi zaten kullanıyor. Farklı bir numara vermek için makalenin yayımını ya da zamanlamasını geri alın, numarayı Makale Numarası alanına yazın ve yeniden yayımlayın."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldPending"
+msgstr "Sayfalar alanındaki “{$value}” değerini #{$otherId} numaralı gönderi zaten kullanıyor; bu yüzden yayımda buraya kopyalanmayacak. Farklı bir Makale Numarası yazın ya da alanı boş bırakın."
+
+msgid "plugins.generic.articleNumber.duplicate.fieldSkipped"
+msgstr "Yayımda Makale Numarası yazılmadı: Sayfalar alanındaki “{$value}” değerini #{$otherId} numaralı gönderi zaten kullanıyor. Farklı bir numara vermek için makalenin yayımını geri alın, numarayı buraya yazın ve yeniden yayımlayın."
+
+msgid "plugins.generic.articleNumber.migrate.reason.duplicate"
+msgstr "#%id% numaralı gönderiyle aynı numara: iki kez yazılmaz"
